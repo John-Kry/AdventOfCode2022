@@ -3,14 +3,12 @@ use std::cmp;
 pub fn part_one(input: &str) -> Option<u32> {
     let elves: Vec<&str>= input.split("\n\n").collect();
 
-    let mut max:u32= 0;
-    elves.iter().for_each(|elf_lines|{
-        let calories = elf_lines.lines().map(|lin|{
+    return Some(elves.iter().fold(0, |acc, elf_lines| {
+        let calories = elf_lines.lines().map(|lin| {
             lin.parse::<u32>().unwrap()
         }).sum();
-        max = cmp::max(max, calories);
-    });
-    Option::from(max)
+        return cmp::max(acc, calories);
+    }));
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
@@ -24,7 +22,7 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     sums.sort();
     sums.reverse();
-    Option::from(sums[0] + sums[1] + sums[2])
+    Option::from(sums.into_iter().take(3).sum::<u32>())
 }
 
 fn main() {
