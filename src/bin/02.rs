@@ -6,8 +6,8 @@ pub fn part_one(input: &str) -> Option<u32> {
 
     let scores = lines.iter().map(|line| {
         let mut chars = line.split(" ");
-        let opponent = Move::parse_me(chars.next().unwrap().chars().next().unwrap());
-        let me = Move::parse_opponent(chars.next().unwrap().chars().next().unwrap());
+        let opponent = chars.next().unwrap().chars().next().unwrap().parse_opponent();
+        let me = chars.next().unwrap().chars().next().unwrap().parse_me();
         let outcome = Move::get_outcome(me, opponent);
         let points =Move::get_points(me, outcome);
         // println!("me:{:?}, opponent:{:?}, points:{:?}",me, opponent, points);
@@ -22,7 +22,7 @@ pub fn part_two(input: &str) -> Option<u32> {
 
     Some(lines.iter().map(|line| {
         let mut chars = line.split(" ");
-        let opponent = Move::parse_me(chars.next().unwrap().chars().next().unwrap());
+        let opponent = chars.next().unwrap().chars().next().unwrap().parse_opponent();
         let me = Move::move_should_be(opponent, Move::parse_intended_outcome(chars.next().unwrap().chars().next().unwrap()));
         let outcome = Move::get_outcome(me, opponent);
         let points = Move::get_points(me, outcome);
@@ -52,6 +52,34 @@ enum Outcome {
     Win,
     Lose,
     Draw,
+}
+
+trait ParseMove{
+    fn parse_opponent(&self) -> Move;
+    fn parse_me(&self) -> Move;
+}
+impl ParseMove for char{
+    fn parse_opponent(&self) -> Move {
+        match self {
+            'A' => Rock,
+            'B' => Paper,
+            'C' => Scissor,
+            _ => {
+                unreachable!()
+            }
+        }
+    }
+    fn parse_me(&self) -> Move {
+        println!("{}", self);
+        match self {
+            'X' => Rock,
+            'Y' => Paper,
+            'Z' => Scissor,
+            _ => {
+                unreachable!()
+            }
+        }
+    }
 }
 
 impl Move {
@@ -115,27 +143,9 @@ impl Move {
         };
         points_from_piece + points_from_victor
     }
-    fn parse_me(c: char) -> Move {
-        match c {
-            'A' => Rock,
-            'B' => Paper,
-            'C' => Scissor,
-            _ => {
-                unreachable!()
-            }
-        }
-    }
 
-    fn parse_opponent(c: char) -> Move {
-        match c {
-            'X' => Rock,
-            'Y' => Paper,
-            'Z' => Scissor,
-            _ => {
-                unreachable!()
-            }
-        }
-    }
+
+
 }
 
 #[cfg(test)]
