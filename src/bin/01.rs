@@ -2,23 +2,19 @@ use std::cmp;
 
 pub fn part_one(input: &str) -> Option<u32> {
     let mut calories = parse_input(input);
-
     calories.sort();
     calories.into_iter().rev().next()
 }
 
 fn parse_input(input: &str) -> Vec<u32> {
-    let elves: Vec<&str> = input.split("\n\n").collect();
-
-    elves
-        .iter()
+    input.split("\n\n").into_iter()
         .map(|elf_lines| {
             return elf_lines
                 .lines()
                 .map(|lin| lin.parse::<u32>().unwrap())
                 .sum();
         })
-        .collect()
+        .collect::<Vec<u32>>()
 }
 
 pub fn part_two(input: &str) -> Option<u32> {

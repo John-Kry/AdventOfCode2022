@@ -2,34 +2,27 @@ use crate::Move::{Paper, Rock, Scissor};
 use crate::Outcome::{Draw, Lose, Win};
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let lines = input.lines().collect::<Vec<&str>>();
 
-    let scores = lines.iter().map(|line| {
+    Some(input.lines().into_iter().map(|line| {
         let mut chars = line.split(" ");
-        let opponent = chars.next().unwrap().chars().next().unwrap().parse_opponent();
-        let me = chars.next().unwrap().chars().next().unwrap().parse_me();
+        let opponent = chars.next().unwrap().chars().next().unwrap().parse_into_move();
+        let me = chars.next().unwrap().chars().next().unwrap().parse_into_move();
         let outcome = Move::get_outcome(me, opponent);
-        let points =Move::get_points(me, outcome);
-        // println!("me:{:?}, opponent:{:?}, points:{:?}",me, opponent, points);
-        points
-    }).collect::<Vec<u32>>();
-
-    Some(scores.iter().sum())
+        Move::get_points(me, outcome)
+    }).sum::<u32>())
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let lines = input.lines().collect::<Vec<&str>>();
 
-    Some(lines.iter().map(|line| {
+    Some(input.lines().into_iter().map(|line| {
         let mut chars = line.split(" ");
-        let opponent = chars.next().unwrap().chars().next().unwrap().parse_opponent();
+        let opponent = chars.next().unwrap().chars().next().unwrap().parse_into_move();
         let me = Move::move_should_be(opponent, Move::parse_intended_outcome(chars.next().unwrap().chars().next().unwrap()));
         let outcome = Move::get_outcome(me, opponent);
-        let points = Move::get_points(me, outcome);
-        // println!("me:{:?}, opponent:{:?}, points:{:?}", me, opponent, points);
-        points
+        Move::get_points(me, outcome)
     }).sum::<u32>())
 }
+
 
 fn main() {
     let input = &advent_of_code::read_file("inputs", 2);
@@ -43,10 +36,6 @@ enum Move {
     Paper,
     Scissor,
 }
-enum Player {
-    Me,
-    Opponent,
-}
 
 enum Outcome {
     Win,
@@ -55,26 +44,19 @@ enum Outcome {
 }
 
 trait ParseMove{
-    fn parse_opponent(&self) -> Move;
-    fn parse_me(&self) -> Move;
+    fn parse_into_move(&self) -> Move;
 }
+
 impl ParseMove for char{
-    fn parse_opponent(&self) -> Move {
-        match self {
-            'A' => Rock,
-            'B' => Paper,
-            'C' => Scissor,
-            _ => {
-                unreachable!()
-            }
-        }
-    }
-    fn parse_me(&self) -> Move {
-        println!("{}", self);
+    fn parse_into_move(&self) -> Move {
         match self {
             'X' => Rock,
             'Y' => Paper,
             'Z' => Scissor,
+
+            'A' => Rock,
+            'B' => Paper,
+            'C' => Scissor,
             _ => {
                 unreachable!()
             }
@@ -107,16 +89,15 @@ impl Move {
                 Win => {Rock}
                 Lose => {Paper}
                 Draw => {Scissor}
-            }
-            }
+            }}
         }
     }
     fn get_outcome(my_move: Move, opponent_move: Move) -> Outcome {
         match my_move {
             Rock => match opponent_move {
-                Rock => Outcome::Draw,
-                Paper => Outcome::Lose,
-                Scissor => Outcome::Win,
+                Rock => Draw,
+                Paper => Lose,
+                Scissor => Win,
             },
             Paper => match opponent_move {
                 Rock => Win,
@@ -143,9 +124,6 @@ impl Move {
         };
         points_from_piece + points_from_victor
     }
-
-
-
 }
 
 #[cfg(test)]
