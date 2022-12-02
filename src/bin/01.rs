@@ -1,8 +1,6 @@
-use std::cmp;
-
 pub fn part_one(input: &str) -> Option<u32> {
     let mut calories = parse_input(input);
-    calories.sort();
+    calories.sort_unstable();
     calories.into_iter().rev().next()
 }
 
@@ -20,7 +18,7 @@ fn parse_input(input: &str) -> Vec<u32> {
 pub fn part_two(input: &str) -> Option<u32> {
     let mut calories = parse_input(input);
 
-    calories.sort();
+    calories.sort_unstable();
     Some(calories.into_iter().rev().take(3).sum())
 }
 

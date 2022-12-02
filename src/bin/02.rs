@@ -4,7 +4,7 @@ use crate::Outcome::{Draw, Lose, Win};
 pub fn part_one(input: &str) -> Option<u32> {
 
     Some(input.lines().into_iter().map(|line| {
-        let mut chars = line.split(" ");
+        let mut chars = line.split(' ');
         let opponent = chars.next().unwrap().chars().next().unwrap().parse_into_move();
         let me = chars.next().unwrap().chars().next().unwrap().parse_into_move();
         let outcome = Move::get_outcome(me, opponent);
@@ -15,7 +15,7 @@ pub fn part_one(input: &str) -> Option<u32> {
 pub fn part_two(input: &str) -> Option<u32> {
 
     Some(input.lines().into_iter().map(|line| {
-        let mut chars = line.split(" ");
+        let mut chars = line.split(' ');
         let opponent = chars.next().unwrap().chars().next().unwrap().parse_into_move();
         let me = Move::move_should_be(opponent, Move::parse_intended_outcome(chars.next().unwrap().chars().next().unwrap()));
         let outcome = Move::get_outcome(me, opponent);
