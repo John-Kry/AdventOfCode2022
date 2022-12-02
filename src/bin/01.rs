@@ -1,28 +1,31 @@
 use std::cmp;
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let elves: Vec<&str>= input.split("\n\n").collect();
+    let mut calories = parse_input(input);
 
-    return Some(elves.iter().fold(0, |acc, elf_lines| {
-        let calories = elf_lines.lines().map(|lin| {
-            lin.parse::<u32>().unwrap()
-        }).sum();
-        return cmp::max(acc, calories);
-    }));
+    calories.sort();
+    calories.into_iter().rev().next()
+}
+
+fn parse_input(input: &str) -> Vec<u32> {
+    let elves: Vec<&str> = input.split("\n\n").collect();
+
+    elves
+        .iter()
+        .map(|elf_lines| {
+            return elf_lines
+                .lines()
+                .map(|lin| lin.parse::<u32>().unwrap())
+                .sum();
+        })
+        .collect()
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
-    let elves: Vec<&str>= input.split("\n\n").collect();
+    let mut calories = parse_input(input);
 
-    let mut sums: Vec<u32> = elves.iter().map(|elf_lines|{
-        return elf_lines.lines().map(|lin|{
-            lin.parse::<u32>().unwrap()
-        }).sum();
-    }).collect();
-
-    sums.sort();
-    sums.reverse();
-    Option::from(sums.into_iter().take(3).sum::<u32>())
+    calories.sort();
+    Some(calories.into_iter().rev().take(3).sum())
 }
 
 fn main() {
