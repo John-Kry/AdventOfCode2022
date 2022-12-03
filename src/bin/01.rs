@@ -5,7 +5,9 @@ pub fn part_one(input: &str) -> Option<u32> {
 }
 
 fn parse_input(input: &str) -> Vec<u32> {
-    input.split("\n\n").into_iter()
+    input
+        .split("\n\n")
+        .into_iter()
         .map(|elf_lines| {
             return elf_lines
                 .lines()

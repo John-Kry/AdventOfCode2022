@@ -2,76 +2,74 @@ use std::collections::HashSet;
 use std::str::Chars;
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let chars = input.lines().into_iter().map(|line|{
-        let half = line.len()/2;
+    let mut seen: HashSet<char> = HashSet::new();
+    Some(input.lines().fold(0u32, |prev, line| {
+        let half = line.len() / 2;
         let (backpack_1, backpack_2) = line.split_at(half);
-        let mut seen:HashSet<char> = HashSet::new();
-        backpack_1.chars().into_iter().for_each(|c|{
+
+        backpack_1.chars().for_each(|c| {
             seen.insert(c);
         });
-        let dupe = backpack_2.chars().into_iter().find(|c|{
-            seen.contains(c)
-        });
 
-        return dupe;
-    });
-    Some(chars.fold(0, |prev, c|{
-        let val = priority(c.unwrap());
-        prev + val
+        let dupe = backpack_2.chars().find(|c| seen.contains(c)).unwrap();
+
+        seen.clear();
+
+        prev + priority(dupe)
     }))
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
     let mut lines = input.lines();
-    let mut sum =0;
-    while let Some(x)= lines.next(){
-
-        let val = priority(Backpacks{
-            one: x.chars(),
-            two: lines.next().unwrap().chars(),
-            three: lines.next().unwrap().chars(),
-        }.common_char());
-        sum+=val;
+    let mut sum = 0;
+    while let Some(x) = lines.next() {
+        let val = priority(
+            Backpacks {
+                one: x.chars(),
+                two: lines.next().unwrap().chars(),
+                three: lines.next().unwrap().chars(),
+            }
+            .common_char(),
+        );
+        sum += val;
     }
 
     Some(sum)
 }
 
-struct Backpacks<'a>{
-    one: Chars <'a>,
-    two: Chars <'a>,
-    three: Chars <'a>
+struct Backpacks<'a> {
+    one: Chars<'a>,
+    two: Chars<'a>,
+    three: Chars<'a>,
 }
-impl<'a> Backpacks<'a>{
-    fn common_char(&self)->char{
-        let mut seen:HashSet<char> = HashSet::new();
-        self.one.clone().for_each(|c|{
+impl<'a> Backpacks<'a> {
+    fn common_char(self) -> char {
+        let mut seen: HashSet<char> = HashSet::new();
+        self.one.for_each(|c| {
             seen.insert(c);
         });
 
-        let mut seen_2:HashSet<char> = HashSet::new();
-        self.two.clone().for_each(|c|{
+        let mut seen_2: HashSet<char> = HashSet::new();
+        self.two.for_each(|c| {
             seen_2.insert(c);
         });
 
-        seen.clone().iter().for_each(|c|{
-            if !seen_2.contains(c){
+        seen.clone().iter().for_each(|c| {
+            if !seen_2.contains(c) {
                 seen.remove(c);
             }
         });
 
-        let dupe = self.three.clone().find(|c|{
-            seen.contains(c)
-        });
+        let dupe = self.three.clone().find(|c| seen.contains(c));
         dupe.unwrap()
     }
 }
 
-fn priority(c:char)->u32{
+fn priority(c: char) -> u32 {
     let mut val = c as u32;
-    if c.is_ascii_lowercase(){
+    if c.is_ascii_lowercase() {
         val -= 96;
-    }else{
+    } else {
         val -= 38;
     }
     val
