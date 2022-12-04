@@ -42,7 +42,7 @@ struct Backpacks<'a> {
     two: Chars<'a>,
     three: Chars<'a>,
 }
-impl<'a> Backpacks<'a> {
+impl Backpacks<'_> {
     fn common_char(self) -> char {
         let mut seen: HashSet<char> = HashSet::new();
         self.one.for_each(|c| {

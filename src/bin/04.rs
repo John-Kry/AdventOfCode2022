@@ -1,4 +1,5 @@
 use std::cmp;
+use std::str::FromStr;
 
 pub fn part_one(input: &str) -> Option<u32> {
     Some(
@@ -81,9 +82,9 @@ impl TryFrom<&str> for Pair {
 
     fn try_from(value: &str) -> Result<Self, Self::Error> {
         if let Some((interval_one_str, interval_two_str)) = value.split_once(',') {
-            return Ok(Pair {
-                one: Interval::try_from(interval_one_str)?,
-                two: Interval::try_from(interval_two_str)?,
+            return Ok(Self {
+                one: interval_one_str.parse()?,
+                two: interval_two_str.parse()?,
             });
         } else {
             Err(())
@@ -91,14 +92,14 @@ impl TryFrom<&str> for Pair {
     }
 }
 
-impl TryFrom<&str> for Interval {
-    type Error = ();
+impl FromStr for Interval {
+    type Err = ();
 
-    fn try_from(value: &str) -> Result<Self, Self::Error> {
-        let numbers = value.split_once('-');
-        Ok(Interval {
-            left: numbers.unwrap().0.parse::<u32>().unwrap(),
-            right: numbers.unwrap().1.parse::<u32>().unwrap(),
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let (left, right) = s.split_once('-').expect("Aoc input should be valid");
+        Ok(Self {
+            left:left.parse().unwrap(),
+            right: right.parse().unwrap(),
         })
     }
 }
