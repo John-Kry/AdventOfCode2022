@@ -8,20 +8,18 @@ pub fn part_one(input: &str) -> Option<u32> {
             .into_iter()
             .map(|line| {
                 let mut chars = line.split(' ');
-                let opponent = chars
+                let opponent = Move::from(chars
                     .next()
                     .unwrap()
                     .chars()
                     .next()
-                    .unwrap()
-                    .parse_into_move();
-                let me = chars
+                    .unwrap());
+                let me = Move::from(chars
                     .next()
                     .unwrap()
                     .chars()
                     .next()
-                    .unwrap()
-                    .parse_into_move();
+                    .unwrap());
                 let outcome = Move::get_outcome(me, opponent);
                 Move::get_points(me, outcome)
             })
@@ -36,13 +34,12 @@ pub fn part_two(input: &str) -> Option<u32> {
             .into_iter()
             .map(|line| {
                 let mut chars = line.split(' ');
-                let opponent = chars
+                let opponent = Move::from(chars
                     .next()
                     .unwrap()
                     .chars()
                     .next()
-                    .unwrap()
-                    .parse_into_move();
+                    .unwrap());
                 let me = Move::move_should_be(
                     opponent,
                     Move::parse_intended_outcome(chars.next().unwrap().chars().next().unwrap()),
@@ -73,24 +70,20 @@ enum Outcome {
     Draw,
 }
 
-trait ParseMove {
-    fn parse_into_move(&self) -> Move;
-}
+impl From<char> for Move{
+    fn from(value: char) -> Self {
+            match value {
+                'X' => Rock,
+                'Y' => Paper,
+                'Z' => Scissor,
 
-impl ParseMove for char {
-    fn parse_into_move(&self) -> Move {
-        match self {
-            'X' => Rock,
-            'Y' => Paper,
-            'Z' => Scissor,
-
-            'A' => Rock,
-            'B' => Paper,
-            'C' => Scissor,
-            _ => {
-                unreachable!()
+                'A' => Rock,
+                'B' => Paper,
+                'C' => Scissor,
+                _ => {
+                    unreachable!()
+                }
             }
-        }
     }
 }
 
