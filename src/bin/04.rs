@@ -7,12 +7,14 @@ pub fn part_one(input: &str) -> Option<u32> {
             .lines()
             .filter_map(|line| {
                 let pair = Pair::try_from(line).expect("string should be in parseable format");
-                if pair.items_contain_eachother() {
+                if pair.items_contain_each_other() {
                     return Some(pair);
                 }
                 return None;
             })
-            .count() as u32,
+            .count()
+            .try_into()
+            .expect("usize shouldn't be that large"),
     )
 }
 
@@ -27,7 +29,9 @@ pub fn part_two(input: &str) -> Option<u32> {
                 }
                 return None;
             })
-            .count() as u32,
+            .count()
+            .try_into()
+            .expect("usize shouldn't be that large"),
     )
 }
 
@@ -44,7 +48,7 @@ struct Interval {
 }
 
 impl Pair {
-    fn items_contain_eachother(self: &Self) -> bool {
+    fn items_contain_each_other(self: &Self) -> bool {
         if self.one.left <= self.two.left && self.one.right >= self.two.right {
             return true;
         }
@@ -98,7 +102,7 @@ impl FromStr for Interval {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (left, right) = s.split_once('-').expect("Aoc input should be valid");
         Ok(Self {
-            left:left.parse().unwrap(),
+            left: left.parse().unwrap(),
             right: right.parse().unwrap(),
         })
     }
@@ -119,13 +123,15 @@ mod tests {
             one: Interval { left: 3, right: 7 },
             two: Interval { left: 2, right: 8 }
         }
-        .items_contain_eachother());
+        .items_contain_each_other());
         assert!(Pair {
             one: Interval { left: 3, right: 7 },
             two: Interval { left: 2, right: 8 }
         }
-        .items_contain_eachother());
-        assert!(Pair::try_from("3-3,3-3").unwrap().items_contain_eachother());
+        .items_contain_each_other());
+        assert!(Pair::try_from("3-3,3-3")
+            .unwrap()
+            .items_contain_each_other());
         assert!(Pair::try_from("12-75,32-74").unwrap().does_overlap())
     }
 
