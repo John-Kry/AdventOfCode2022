@@ -1,18 +1,11 @@
-use std::collections::HashMap;
 use std::num::ParseIntError;
 use std::str::FromStr;
 use std::usize;
 
 pub fn part_one(input: &str) -> Option<String> {
     let (setup, moves) = input.split_once("\n\n").unwrap();
-    let number_of_stacks: usize = setup
-        .chars()
-        .last()
-        .unwrap()
-        .to_digit(10)
-        .unwrap()
-        .try_into()
-        .unwrap();
+    let number_of_stacks = number_of_stacks(setup);
+
     let mut stacks = Stacks::new(number_of_stacks, setup);
 
     moves.lines().for_each(|line| {
@@ -24,14 +17,7 @@ pub fn part_one(input: &str) -> Option<String> {
 
 pub fn part_two(input: &str) -> Option<String> {
     let (setup, moves) = input.split_once("\n\n").unwrap();
-    let number_of_stacks: usize = setup
-        .chars()
-        .last()
-        .unwrap()
-        .to_digit(10)
-        .unwrap()
-        .try_into()
-        .unwrap();
+    let number_of_stacks = number_of_stacks(setup);
 
     let mut stacks = Stacks::new(number_of_stacks, setup);
 
@@ -40,6 +26,17 @@ pub fn part_two(input: &str) -> Option<String> {
         stacks.execute_directions_at_once(dir);
     });
     Some(String::from(stacks))
+}
+
+fn number_of_stacks(setup:&str)->usize{
+    setup
+        .chars()
+        .last()
+        .unwrap()
+        .to_digit(10)
+        .unwrap()
+        .try_into()
+        .unwrap()
 }
 
 fn main() {
@@ -80,21 +77,16 @@ impl Stacks {
     pub fn new(number_of_stacks: usize, setup: &str) -> Self {
         let mut stacks: Vec<Vec<char>> = Vec::new();
 
-        for _ in 0..number_of_stacks {
-            stacks.push(Vec::new());
-        }
+       (0..number_of_stacks).for_each(|_| {
+           stacks.push(Vec::new());
+       });
 
-        let mut map: HashMap<usize, usize> = HashMap::new();
-        map.insert(1, 0);
-        for i in 0..=9 {
-            map.insert(1 + 4 * i, i);
-        }
-
+        // Skip one line to exclude the line indicating the positions
         setup.lines().rev().skip(1).for_each(|line| {
-            line.chars().enumerate().for_each(|(pos, c)| {
-                if !c.is_whitespace() && c != '[' && c != ']' {
-                    let stack_num = map.get(&pos).copied().unwrap();
-                    stacks[stack_num].push(c);
+            // Skip one char and iterate in steps of 4 for each digit
+            line.chars().skip(1).step_by(4).enumerate().for_each(|(pos,c)| {
+                if !c.is_whitespace(){
+                    stacks[pos].push(c);
                 }
             })
         });
