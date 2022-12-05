@@ -5,11 +5,18 @@ use std::usize;
 
 pub fn part_one(input: &str) -> Option<String> {
     let (setup, moves) = input.split_once("\n\n").unwrap();
-    let number_of_stacks:usize = setup.chars().last().unwrap().to_digit(10).unwrap().try_into().unwrap();
+    let number_of_stacks: usize = setup
+        .chars()
+        .last()
+        .unwrap()
+        .to_digit(10)
+        .unwrap()
+        .try_into()
+        .unwrap();
     let mut stacks = Stacks::new(number_of_stacks, setup);
 
     moves.lines().for_each(|line| {
-        let dir:Direction = line.parse().unwrap();
+        let dir: Direction = line.parse().unwrap();
         stacks.execute_directions(dir);
     });
     Some(String::from(stacks))
@@ -17,12 +24,19 @@ pub fn part_one(input: &str) -> Option<String> {
 
 pub fn part_two(input: &str) -> Option<String> {
     let (setup, moves) = input.split_once("\n\n").unwrap();
-    let number_of_stacks:usize = setup.chars().last().unwrap().to_digit(10).unwrap().try_into().unwrap();
+    let number_of_stacks: usize = setup
+        .chars()
+        .last()
+        .unwrap()
+        .to_digit(10)
+        .unwrap()
+        .try_into()
+        .unwrap();
 
     let mut stacks = Stacks::new(number_of_stacks, setup);
 
     moves.lines().for_each(|line| {
-        let dir:Direction = line.parse().unwrap();
+        let dir: Direction = line.parse().unwrap();
         stacks.execute_directions_at_once(dir);
     });
     Some(String::from(stacks))
@@ -37,10 +51,10 @@ fn main() {
 struct Direction {
     amount: u32,
     from: usize,
-    to: usize
+    to: usize,
 }
 
-impl FromStr for Direction{
+impl FromStr for Direction {
     type Err = ParseIntError;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -48,15 +62,11 @@ impl FromStr for Direction{
         let amount = split[1].parse::<u32>()?;
         let from = split[3].parse::<usize>()? - 1;
         let to = split[5].parse::<usize>()? - 1;
-        Ok(Self {
-            amount,
-            from,
-            to,
-        })
+        Ok(Self { amount, from, to })
     }
 }
 
-impl From<Stacks> for String{
+impl From<Stacks> for String {
     fn from(stacks: Stacks) -> Self {
         String::from_iter(stacks.stacks.iter().filter_map(|v| v.last()))
     }
@@ -89,22 +99,23 @@ impl Stacks {
             })
         });
 
-        Self { stacks}
+        Self { stacks }
     }
 
     fn move_char(&mut self, from: usize, to: usize) {
         let prev = self.stacks[from].pop().unwrap();
         self.stacks[to].push(prev);
     }
-    fn execute_directions(&mut self, dir:Direction) {
-        for _ in 0..dir.amount {
+    fn execute_directions(&mut self, dir: Direction) {
+        (0..dir.amount).for_each(|_| {
             self.move_char(dir.from, dir.to);
-        }
+        });
     }
-    fn execute_directions_at_once(&mut self, dir:Direction) {
+    fn execute_directions_at_once(&mut self, dir: Direction) {
         let items: Vec<char> = (0..dir.amount)
-            .map(|_|    self.stacks[dir.from].pop().unwrap())
+            .map(|_| self.stacks[dir.from].pop().unwrap())
             .collect();
+
         items.iter().rev().for_each(|item| {
             self.stacks[dir.to].push(*item);
         });
