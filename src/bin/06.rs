@@ -1,4 +1,4 @@
-use std::collections::{HashMap, VecDeque};
+use std::collections::{HashMap};
 
 pub fn part_one(input: &str) -> Option<usize> {
     get_first_unique(input, 4)
@@ -16,7 +16,7 @@ fn get_first_unique(input: &str, size:usize)->Option<usize>{
         } else {
             seen.add(c);
             seen.remove(input.chars().nth(i - size).unwrap());
-            if seen.is_unique(c) {
+            if seen.is_unique() {
                 return Some(i + 1_usize);
             }
         }
@@ -25,7 +25,7 @@ fn get_first_unique(input: &str, size:usize)->Option<usize>{
 }
 
 struct Seen{
-    pub map: HashMap<char, usize>
+    map: HashMap<char, usize>
 }
 
 
@@ -35,8 +35,8 @@ impl Seen {
            map: HashMap::new()
        }
     }
-    fn is_unique(&self, c:char) ->bool{
-       return self.map.iter().all(|(c,i)|{
+    fn is_unique(&self) ->bool{
+       return self.map.iter().all(|(_,i)|{
            i <= &1_usize
        });
     }
