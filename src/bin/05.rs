@@ -28,7 +28,7 @@ pub fn part_two(input: &str) -> Option<String> {
     Some(String::from(stacks))
 }
 
-fn number_of_stacks(setup:&str)->usize{
+fn number_of_stacks(setup: &str) -> usize {
     setup
         .chars()
         .last()
@@ -77,18 +77,22 @@ impl Stacks {
     pub fn new(number_of_stacks: usize, setup: &str) -> Self {
         let mut stacks: Vec<Vec<char>> = Vec::new();
 
-       (0..number_of_stacks).for_each(|_| {
-           stacks.push(Vec::new());
-       });
+        (0..number_of_stacks).for_each(|_| {
+            stacks.push(Vec::new());
+        });
 
         // Skip one line to exclude the line indicating the positions
         setup.lines().rev().skip(1).for_each(|line| {
             // Skip one char and iterate in steps of 4 for each digit
-            line.chars().skip(1).step_by(4).enumerate().for_each(|(pos,c)| {
-                if !c.is_whitespace(){
-                    stacks[pos].push(c);
-                }
-            })
+            line.chars()
+                .skip(1)
+                .step_by(4)
+                .enumerate()
+                .for_each(|(pos, c)| {
+                    if !c.is_whitespace() {
+                        stacks[pos].push(c);
+                    }
+                })
         });
 
         Self { stacks }
