@@ -10,16 +10,19 @@ pub fn part_two(input: &str) -> Option<usize> {
 
 fn get_first_unique(input: &str, size:usize)->Option<usize>{
     let mut seen = Seen::new();
-    for (i, c) in input.chars().enumerate() {
-        if i < size {
-            seen.add(c);
-        } else {
-            seen.add(c);
-            seen.remove(input.chars().nth(i - size).unwrap());
-            if seen.is_unique() {
-                return Some(i + 1_usize);
-            }
+    let mut left =0;
+    let mut right = 0;
+    let chars = input.as_bytes();
+    while right < chars.len(){
+        while seen.get(chars[right] as char) > &0_usize {
+            seen.remove(chars[left] as char);
+            left+=1;
         }
+        if (right - left) == size {
+            return Some(right);
+        }
+        seen.add(chars[right] as char);
+        right+=1;
     }
     None
 }
@@ -35,10 +38,9 @@ impl Seen {
            map: HashMap::new()
        }
     }
-    fn is_unique(&self) ->bool{
-       return self.map.iter().all(|(_,i)|{
-           i <= &1_usize
-       });
+
+    fn get(&self, c:char) -> &usize {
+        self.map.get(&c).unwrap_or(&0_usize)
     }
    fn add(&mut self, c:char){
        if self.map.contains_key(&c) {
