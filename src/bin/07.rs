@@ -1,13 +1,21 @@
 use std::borrow::{Borrow, BorrowMut};
 use std::cell::RefCell;
+use std::collections::HashSet;
 use std::ops::Deref;
 use std::rc::Rc;
 use crate::Command::{CD, LS};
 use std::str::FromStr;
+use id_tree::*;
+use id_tree::InsertBehavior::AsRoot;
+
 
 pub fn part_one(input: &str) -> Option<u32> {
-    let mut root = Rc::new(RefCell::new(Node::new()));
-    let mut curr_node =  Rc::clone(&root);
+    let mut tree: Tree<MyNode> = TreeBuilder::new().build();
+    let root_id: NodeId = tree.insert(
+        Node::new(MyNode{ label: '/', files: vec![] }), AsRoot).unwrap())
+    let map: HashSet<char, NodeId>;
+
+    let mut curr_node = tree.get(&root_id).unwrap();
     let mut i = 0;
     while i < input.lines().count() {
         if i ==7{
@@ -21,7 +29,7 @@ pub fn part_one(input: &str) -> Option<u32> {
                 let location = line.split(' ') .nth(2).unwrap().chars().nth(0).unwrap();
                 dbg!(location);
                 if location == '/' {
-                    curr_node = curr_node.borrow_mut().get_mut().root();
+                    curr_node = tree.get(&root_id);
                 } else if location  == '.' {
                    curr_node = curr_node.into_inner().prev.unwrap()
                 }
@@ -38,7 +46,7 @@ pub fn part_one(input: &str) -> Option<u32> {
                     dbg!(size_or_dir);
                     dbg!(name);
                     match size_or_dir {
-                        "dir" => curr_node.into_inner().children.push(Rc::new(RefCell::new(Node {
+                        "dir" => curr_node.into_inner().children.push(Rc::new(RefCell::new(MyNode {
                             label: name.parse().unwrap(),
                             children: vec![],
                             files: vec![],
@@ -86,28 +94,24 @@ impl FromStr for Command {
 }
 
 #[derive(Clone, Debug)]
-struct Node {
+struct MyNode {
     label: char,
-    children: Vec<Rc<RefCell<Node>>>,
     files: Vec<File>,
-    prev: Option<Rc<RefCell<Node>>>
 }
 #[derive(Debug, Clone)]
 struct File {
     size: u32,
     name: String,
 }
-impl Node {
+impl MyNode {
     pub fn new() -> Self {
-        Node {
+        MyNode {
             label: '/',
-            children: Vec::new(),
             files: Vec::new(),
-            prev: None
         }
     }
 
-    pub fn root(&self) -> Rc<RefCell<Node>>{
+    pub fn root(&self) -> Rc<RefCell<MyNode>>{
         let mut curr_node = self.clone();
         while curr_node.prev.is_some(){
             curr_node = curr_node.prev.unwrap().into_inner()
@@ -115,7 +119,7 @@ impl Node {
         Rc::new(RefCell::new(curr_node))
     }
 
-    pub fn cd(&self, c: char) -> Rc<RefCell<Node>> {
+    pub fn cd(&self, c: char) -> Rc<RefCell<MyNode>> {
         self
             .children.clone()
             .iter()
