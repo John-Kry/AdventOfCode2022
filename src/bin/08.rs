@@ -1,5 +1,5 @@
 use std::cmp;
-use std::fmt::{write, Debug, Formatter};
+use std::fmt::Debug;
 
 pub fn part_one(input: &str) -> Option<u32> {
     let lines = input.lines();
