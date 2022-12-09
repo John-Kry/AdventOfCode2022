@@ -4,7 +4,7 @@ use std::fmt::{write, Debug, Formatter};
 pub fn part_one(input: &str) -> Option<u32> {
     let lines = input.lines();
     let x = lines.clone().next().unwrap().len();
-    let y = lines.clone().count();
+    let y = lines.count();
     let mut grid = Grid {
         data: vec![],
         x_len: x,
@@ -17,7 +17,6 @@ pub fn part_one(input: &str) -> Option<u32> {
     for curr_x in 0..x {
         for curr_y in 0..y {
             if grid.is_visible(curr_x as i32, curr_y as i32) {
-                grid.set_value(true, curr_x as i32, curr_y as i32);
                 count += 1;
             }
         }
@@ -28,7 +27,7 @@ pub fn part_one(input: &str) -> Option<u32> {
 pub fn part_two(input: &str) -> Option<u32> {
     let lines = input.lines();
     let x = lines.clone().next().unwrap().len();
-    let y = lines.clone().count();
+    let y = lines.count();
     let mut grid = Grid {
         data: vec![],
         x_len: x,
@@ -111,14 +110,6 @@ impl Grid {
     fn get_value(&self, x: i32, y: i32) -> &(u8, bool) {
         self.data.get(x as usize).unwrap().get(y as usize).unwrap()
     }
-    fn set_value(&mut self, val: bool, x: i32, y: i32) {
-        self.data
-            .get_mut(x as usize)
-            .unwrap()
-            .get_mut(y as usize)
-            .unwrap()
-            .1 = val;
-    }
 
     // This fn is terrible, don't look
     fn get_scenic_score(&mut self, x: i32, y: i32) -> i32 {
@@ -177,14 +168,12 @@ impl Grid {
     }
 }
 
-
-
 fn create_grid(grid: &mut Grid, x: usize, input: &str) {
     let lines = input.lines();
     for curr_x in 0..x {
         grid.data.push(vec![]);
         let curr = grid.data.get_mut(curr_x).unwrap();
-        lines.clone().for_each(| line| {
+        lines.clone().for_each(|line| {
             curr.push((
                 (line.as_bytes().get(curr_x).unwrap().clone() as char)
                     .to_digit(10)
