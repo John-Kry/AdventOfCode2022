@@ -1,3 +1,4 @@
+use std::collections::hash_map::Entry;
 use std::collections::HashMap;
 
 pub fn part_one(input: &str) -> Option<usize> {
@@ -43,12 +44,10 @@ impl Seen {
     }
 
     fn add(&mut self, c: char) {
-        if self.map.contains_key(&c) {
-            self.map
-                .insert(c, self.map.get(&c).expect("Should exist!") + 1);
-        } else {
-            self.map.insert(c, 1);
-        }
+        match self.map.entry(c) {
+            Entry::Occupied(mut e) => {e.insert(e.get() +1); }
+            Entry::Vacant(e) => {e.insert(1);}
+        };
     }
 
     fn remove(&mut self, c: char) {

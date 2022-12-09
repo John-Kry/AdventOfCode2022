@@ -10,7 +10,7 @@ pub fn part_one(input: &str) -> Option<u32> {
                 if pair.items_contain_each_other() {
                     return Some(pair);
                 }
-                return None;
+                None
             })
             .count()
             .try_into()
@@ -27,7 +27,7 @@ pub fn part_two(input: &str) -> Option<u32> {
                 if pair.does_overlap() {
                     return Some(pair);
                 }
-                return None;
+                None
             })
             .count()
             .try_into()
@@ -48,7 +48,7 @@ struct Interval {
 }
 
 impl Pair {
-    fn items_contain_each_other(self: &Self) -> bool {
+    fn items_contain_each_other(&self) -> bool {
         if self.one.left <= self.two.left && self.one.right >= self.two.right {
             return true;
         }
@@ -58,7 +58,7 @@ impl Pair {
         false
     }
 
-    fn does_overlap(self: &Self) -> bool {
+    fn does_overlap(&self) -> bool {
         if self.one.left <= self.two.left
             && self.one.right >= cmp::min(self.two.left, self.two.right)
         {
