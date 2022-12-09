@@ -1,6 +1,5 @@
 use crate::Dir::{D, L, R, U};
 use std::collections::{HashMap, HashSet};
-use std::mem::take;
 
 pub fn part_one(input: &str) -> Option<u32> {
     let mut p = Players {
@@ -14,8 +13,7 @@ pub fn part_one(input: &str) -> Option<u32> {
         let dir = Dir::from(splits.0.chars().next().unwrap());
         let amount = splits.1.parse::<u32>().unwrap();
 
-        let mut i = 0;
-        while i < amount {
+        for _ in 0..amount {
             match dir {
                 R => p.head.x += 1,
                 L => p.head.x -= 1,
@@ -31,7 +29,6 @@ pub fn part_one(input: &str) -> Option<u32> {
                 },
                 true,
             );
-            i += 1;
         }
     });
     Some(seen.iter().count() as u32)
@@ -40,7 +37,8 @@ pub fn part_one(input: &str) -> Option<u32> {
 pub fn part_two(input: &str) -> Option<u32> {
     let mut container = Container::new();
     let mut seen: Vec<HashSet<Pos>> = vec![];
-    for i in 0..10 {
+    const TAIL_LENGTH: usize = 9;
+    for _ in 0..10 {
         seen.push(HashSet::default());
     }
     let lines = input.lines();
@@ -56,58 +54,63 @@ pub fn part_two(input: &str) -> Option<u32> {
                 U => init.y += 1,
                 D => init.y -= 1,
             }
-            for i in 1..10 {
-                let before = container.items.get(i - 1).unwrap().clone();
-                let pos = container.items.get_mut(i).unwrap();
-                if (before.x - pos.x).abs() <= 1 && (before.y - pos.y).abs() <= 1 {
-                } else {
-                    if before.x == pos.x || before.y == pos.y {
-                        if before.x == pos.x {
-                            if before.y > pos.y {
-                                pos.y += 1;
+            for i in 1..=TAIL_LENGTH {
+                let prev = container.items.get(i - 1).unwrap().clone();
+                let curr = container.items.get_mut(i).unwrap();
+                if (prev.x - curr.x).abs() > 1 || (prev.y - curr.y).abs() > 1 {
+                    // If on the same line
+                    if prev.x == curr.x || prev.y == curr.y {
+                        if prev.x == curr.x {
+                            // X is the same, move Y position
+                            if prev.y > curr.y {
+                                curr.y += 1;
                             } else {
-                                pos.y -= 1;
+                                curr.y -= 1;
                             }
                         } else {
-                            if before.x > pos.x {
-                                pos.x += 1;
+                            // Y is the same, move X position
+                            if prev.x > curr.x {
+                                curr.x += 1;
                             } else {
-                                pos.x -= 1;
+                                curr.x -= 1;
                             }
                         }
-                    } else {
+                    }
+                    // If on different line
+                    else {
                         //up
-                        if before.y > pos.y {
-                            // right
-                            if before.x > pos.x {
-                                pos.y += 1;
-                                pos.x += 1;
+                        if prev.y > curr.y {
+                            if prev.x > curr.x {
+                                // right diagonal
+                                curr.y += 1;
+                                curr.x += 1;
                             } else {
-                                // left
-                                pos.y += 1;
-                                pos.x -= 1;
+                                // left diagonal
+                                curr.y += 1;
+                                curr.x -= 1;
                             }
-                            // down
-                        } else {
-                            // right
-                            if before.x > pos.x {
-                                pos.y -= 1;
-                                pos.x += 1;
+                        }
+                        // down
+                        else {
+                            if prev.x > curr.x {
+                                // right diagonal
+                                curr.y -= 1;
+                                curr.x += 1;
                             } else {
-                                // left
-                                pos.y -= 1;
-                                pos.x -= 1;
+                                // left diagonal
+                                curr.y -= 1;
+                                curr.x -= 1;
                             }
                         }
                     }
                 }
-                if i == 9{
-                    seen.get_mut(i).unwrap().insert(pos.clone());
+                if i == TAIL_LENGTH {
+                    seen.get_mut(i).unwrap().insert(curr.clone());
                 }
             }
         }
     });
-    Some(seen.get(9).unwrap().len() as u32)
+    Some(seen.get(TAIL_LENGTH as usize).unwrap().len() as u32)
 }
 
 fn main() {
@@ -123,7 +126,7 @@ struct Container {
 impl Container {
     fn new() -> Self {
         let mut items: Vec<Pos> = vec![];
-        for i in 0..10 {
+        for _ in 0..10 {
             items.push(Pos::default())
         }
         Self { items }
@@ -172,12 +175,6 @@ impl Default for Players {
 }
 
 impl Players {
-    fn is_close(&self) -> bool {
-        if (self.head.x - self.tail.x).abs() <= 1 && (self.head.y - self.tail.y).abs() <= 1 {
-            return true;
-        }
-        return false;
-    }
     fn is_on_same_line(&self) -> bool {
         return self.head.x == self.tail.x || self.head.y == self.tail.y;
     }
