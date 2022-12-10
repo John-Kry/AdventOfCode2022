@@ -7,9 +7,7 @@ pub fn part_one(input: &str) -> Option<u32> {
     lines.for_each(|line| {
         let instruction = line.parse::<Instruction>().unwrap();
         for _ in 0..instruction.cycle_length() {
-            if cpu.cycle == 20 {
-                sum_signal_strength += cpu.signal_strength();
-            } else if cpu.cycle > 20 && ((cpu.cycle - 20) % 40) == 0 {
+            if cpu.cycle >= 20 && ((cpu.cycle - 20) % 40) == 0 {
                 sum_signal_strength += cpu.signal_strength();
             }
             cpu.cycle += 1;
