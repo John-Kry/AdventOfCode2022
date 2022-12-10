@@ -105,7 +105,6 @@ fn generate_tree(tree: &mut Tree<MyNode>, input: &str) {
                             .files
                             .push(File {
                                 size: size.parse().unwrap(),
-                                name: name.to_string(),
                             }),
                     }
                     i += 1;
@@ -149,7 +148,6 @@ struct MyNode {
 #[derive(Debug, Clone)]
 struct File {
     size: u32,
-    name: String,
 }
 
 fn main() {

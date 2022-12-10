@@ -12,7 +12,7 @@ pub fn part_one(input: &str) -> Option<u32> {
             }
             cpu.cycle += 1;
         }
-        cpu.mutate_x(instruction, line);
+        cpu.mutate_x(instruction);
     });
     Some(sum_signal_strength as u32)
 }
@@ -25,11 +25,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     lines.for_each(|line| {
         let instruction = line.parse::<Instruction>().unwrap();
         for _ in 0..instruction.cycle_length() {
-            if (cpu.x - crt_pos as i32).abs() <= 1 {
-                screen.push(true);
-            } else {
-                screen.push(false);
-            }
+            screen.push((cpu.x - crt_pos as i32).abs() <= 1);
 
             crt_pos += 1;
             if crt_pos >= 40 {
@@ -37,7 +33,7 @@ pub fn part_two(input: &str) -> Option<u32> {
             }
             cpu.cycle += 1;
         }
-        cpu.mutate_x(instruction, line);
+        cpu.mutate_x(instruction);
     });
 
     for (k, val) in screen.iter().enumerate() {
@@ -65,11 +61,10 @@ impl Cpu {
     fn signal_strength(&self) -> i32 {
         self.x * self.cycle as i32
     }
-    fn mutate_x(&mut self, ins: Instruction, line: &str) {
+    fn mutate_x(&mut self, ins: Instruction) {
         match ins {
-            Instruction::Add => {
-                let split = line.split_once(' ').unwrap();
-                self.x += split.1.parse::<i32>().unwrap();
+            Instruction::Add(amount) => {
+                self.x += amount;
             }
             Instruction::Noop => {}
         }
@@ -79,7 +74,7 @@ impl Cpu {
 impl Instruction {
     fn cycle_length(&self) -> u32 {
         match self {
-            Instruction::Add => 2,
+            Instruction::Add(_) => 2,
             Instruction::Noop => 1,
         }
     }
@@ -88,16 +83,16 @@ impl FromStr for Instruction {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if s.contains("add") {
-            return Ok(Instruction::Add);
+         if let Some((_,amount)) = s.split_once(' ') {
+            Ok(Instruction::Add(amount.parse::<i32>().unwrap()))
         } else {
-            return Ok(Instruction::Noop);
+            Ok(Instruction::Noop)
         }
     }
 }
 
 enum Instruction {
-    Add,
+    Add(i32),
     Noop,
 }
 
