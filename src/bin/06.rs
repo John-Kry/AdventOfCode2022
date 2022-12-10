@@ -45,8 +45,12 @@ impl Seen {
 
     fn add(&mut self, c: char) {
         match self.map.entry(c) {
-            Entry::Occupied(mut e) => {e.insert(e.get() +1); }
-            Entry::Vacant(e) => {e.insert(1);}
+            Entry::Occupied(mut e) => {
+                e.insert(e.get() + 1);
+            }
+            Entry::Vacant(e) => {
+                e.insert(1);
+            }
         };
     }
 

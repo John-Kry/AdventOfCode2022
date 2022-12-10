@@ -132,10 +132,10 @@ impl From<char> for Dir {
 #[derive(Eq, PartialEq, Default, Clone)]
 struct Pos {
     x: i64,
-    y: i64
+    y: i64,
 }
 
-impl Hash for Pos{
+impl Hash for Pos {
     fn hash<H: Hasher>(&self, state: &mut H) {
         (self.x * 31099 + 773 * self.y).hash(state);
     }
@@ -157,13 +157,15 @@ mod tests {
         assert_eq!(part_two(&input), Some(1));
     }
 
-    #[test] #[ignore]
-    fn big(){
-        let input= advent_of_code::read_tyw_file("09.txt");
+    #[test]
+    #[ignore]
+    fn big() {
+        let input = advent_of_code::read_tyw_file("09.txt");
         assert_eq!(part_one(&input), Some(16877673));
         assert_eq!(part_two(&input), Some(14108518))
     }
-    #[test] #[ignore]
+    #[test]
+    #[ignore]
     fn bigger() {
         let input = advent_of_code::read_tyw_file("09_bigger.txt");
         assert_eq!(part_one(&input), Some(167327628));

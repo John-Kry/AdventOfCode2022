@@ -50,7 +50,7 @@ pub fn read_file(folder: &str, day: u8) -> String {
     f.expect("could not open input file")
 }
 
-pub fn read_tyw_file(file_name:&str) -> String {
+pub fn read_tyw_file(file_name: &str) -> String {
     let cwd = env::current_dir().unwrap();
 
     let filepath = cwd.join("src").join("test_your_wit").join(file_name);
