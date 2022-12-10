@@ -14,7 +14,7 @@ pub fn part_one(input: &str) -> Option<u32> {
             }
             cpu.cycle += 1;
         }
-        instruction.mutate_x(&mut cpu, line);
+        cpu.mutate_x(instruction, line);
     });
     Some(sum_signal_strength as u32)
 }
@@ -39,7 +39,7 @@ pub fn part_two(input: &str) -> Option<u32> {
             }
             cpu.cycle += 1;
         }
-        instruction.mutate_x(&mut cpu, line);
+        cpu.mutate_x(instruction, line);
     });
 
     for (k, val) in screen.iter().enumerate() {
@@ -67,6 +67,15 @@ impl Cpu {
     fn signal_strength(&self) -> i32 {
         self.x * self.cycle as i32
     }
+    fn mutate_x(&mut self, ins: Instruction, line: &str) {
+        match ins {
+            Instruction::Add => {
+                let split = line.split_once(' ').unwrap();
+                self.x += split.1.parse::<i32>().unwrap();
+            }
+            Instruction::Noop => {}
+        }
+    }
 }
 
 impl Instruction {
@@ -74,15 +83,6 @@ impl Instruction {
         match self {
             Instruction::Add => 2,
             Instruction::Noop => 1,
-        }
-    }
-    fn mutate_x(&self, cpu: &mut Cpu, line: &str) {
-        match self {
-            Instruction::Add => {
-                let split = line.split_once(' ').unwrap();
-                cpu.x += split.1.parse::<i32>().unwrap();
-            }
-            Instruction::Noop => {}
         }
     }
 }
