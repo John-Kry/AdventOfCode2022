@@ -29,7 +29,8 @@ pub fn part_two(input: &str) -> Option<String> {
 }
 
 fn number_of_stacks(setup: &str) -> usize {
-    setup.trim_end()
+    setup
+        .trim_end()
         .chars()
         .last()
         .unwrap()

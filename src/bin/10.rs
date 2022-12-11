@@ -83,7 +83,7 @@ impl FromStr for Instruction {
     type Err = ();
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-         if let Some((_,amount)) = s.split_once(' ') {
+        if let Some((_, amount)) = s.split_once(' ') {
             Ok(Instruction::Add(amount.parse::<i32>().unwrap()))
         } else {
             Ok(Instruction::Noop)
