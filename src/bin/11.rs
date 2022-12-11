@@ -63,12 +63,12 @@ fn solve(input: &str, iterations: usize, part: Part) -> Option<u64> {
                 }
                 if worry_level % monkey.divisible_by == 0 {
                     held_items_per_monkey
-                        .get_mut(monkey.target_true as usize)
+                        .get_mut(monkey.target_true)
                         .unwrap()
                         .push_back(worry_level);
                 } else {
                     held_items_per_monkey
-                        .get_mut(monkey.target_false as usize)
+                        .get_mut(monkey.target_false)
                         .unwrap()
                         .push_back(worry_level);
                 }
@@ -108,8 +108,8 @@ enum Part {
 struct Monkey {
     operation: Math,
     divisible_by: u64,
-    target_true: u64,
-    target_false: u64,
+    target_true: usize,
+    target_false: usize,
 }
 
 impl Monkey {
@@ -130,7 +130,7 @@ impl Monkey {
                 .split(' ')
                 .last()
                 .unwrap()
-                .parse::<u64>()
+                .parse::<usize>()
                 .unwrap(),
             target_false: lines
                 .get(5)
@@ -138,7 +138,7 @@ impl Monkey {
                 .split(' ')
                 .last()
                 .unwrap()
-                .parse::<u64>()
+                .parse::<usize>()
                 .unwrap(),
         }
     }
