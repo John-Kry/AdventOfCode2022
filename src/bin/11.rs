@@ -2,29 +2,45 @@ use crate::Sign::{Minus, Multiply, Plus};
 use crate::Value::{New, Old};
 use std::collections::VecDeque;
 use std::str::FromStr;
+use crate::Part::One;
+use crate::Part::Two;
 
 pub fn part_one(input: &str) -> Option<u64> {
+    solve(input, 20, One)
+}
+
+pub fn part_two(input: &str) -> Option<u64> {
+    solve(input, 10_000, Two)
+}
+
+fn solve(input: &str, iterations:usize, part: Part) -> Option<u64> {
     let monkey_strings = input.split("\n\n").collect::<Vec<&str>>();
     let mut monkies: Vec<Monkey> = vec![];
 
-    let mut itemss: Vec<VecDeque<u64>> = vec![];
+    let mut held_items_per_monkey: Vec<VecDeque<u64>> = vec![];
     for monkey in monkey_strings {
         let lines = monkey.lines().map(|s| s.trim()).collect::<Vec<&str>>();
-        let items = held_items(&lines);
+        let held_items = held_items(&lines);
 
         let operation = lines.get(2).unwrap();
         let math = Math::new(operation);
         let monkey = Monkey::new(lines, math);
 
-        itemss.push(VecDeque::from(items));
+        held_items_per_monkey.push(VecDeque::from(held_items));
         monkies.push(monkey);
     }
+
+    let mut modulo = 1;
+    for monkey in &monkies {
+        modulo *= monkey.divisible_by
+    }
+
     let mut inspects: Vec<u64> = vec![0; monkies.len()];
     // one round
-    for _ in 0..20 {
+    for _ in 0..iterations {
         for (j, monkey) in monkies.iter_mut().enumerate() {
-            while itemss.get(j).unwrap().len() > 0 {
-                let mut worry_level = itemss.get_mut(j).unwrap().pop_front().unwrap();
+            while held_items_per_monkey.get(j).unwrap().len() > 0 {
+                let mut worry_level = held_items_per_monkey.get_mut(j).unwrap().pop_front().unwrap();
                 let math = &monkey.operation;
                 let left_amount = math.left.parse::<u64>().unwrap_or(worry_level);
 
@@ -34,20 +50,26 @@ pub fn part_one(input: &str) -> Option<u64> {
                     Minus => worry_level = left_amount - right_amount,
                     Multiply => worry_level = left_amount * right_amount,
                 }
-                worry_level = worry_level / 3;
+                match part {
+                    One => {
+                        worry_level = worry_level / 3;
+                    }
+                    Two => {
+                        worry_level = worry_level % modulo;
+                    }
+                }
                 if worry_level % monkey.divisible_by == 0 {
-                    itemss
+                    held_items_per_monkey
                         .get_mut(monkey.target_true as usize)
                         .unwrap()
                         .push_back(worry_level);
                 } else {
-                    itemss
+                    held_items_per_monkey
                         .get_mut(monkey.target_false as usize)
                         .unwrap()
                         .push_back(worry_level);
                 }
-                let new = inspects.get(j).unwrap_or(&0) + 1;
-                inspects[j] = new;
+                inspects[j]= inspects.get(j).unwrap_or(&0) + 1;
             }
         }
     }
@@ -70,108 +92,17 @@ fn held_items(lines: &Vec<&str>) -> Vec<u64> {
     items
 }
 
-pub fn part_two(input: &str) -> Option<u64> {
-    let monkey_strings = input.split("\n\n").collect::<Vec<&str>>();
-    let mut monkies: Vec<Monkey> = vec![];
 
-    let mut itemss: Vec<VecDeque<u64>> = vec![];
-    for monkey in monkey_strings {
-        let lines = monkey.lines().map(|s| s.trim()).collect::<Vec<&str>>();
-        let items = lines
-            .get(1)
-            .unwrap()
-            .split(':')
-            .nth(1)
-            .unwrap()
-            .trim()
-            .split(", ")
-            .map(|item| item.parse::<u64>().unwrap())
-            .collect::<Vec<u64>>();
-
-        let operation = lines.get(2).unwrap();
-        let split = operation.split(' ').collect::<Vec<&str>>();
-        let math = Math {
-            sign: split.get(4).unwrap().parse().unwrap(),
-            left: split.get(3).unwrap().to_string(),
-            right: split.get(5).unwrap().to_string(),
-        };
-
-        let monkey = Monkey {
-            operation: math,
-            divisible_by: lines
-                .get(3)
-                .unwrap()
-                .split(' ')
-                .last()
-                .unwrap()
-                .parse::<u64>()
-                .unwrap(),
-            target_true: lines
-                .get(4)
-                .unwrap()
-                .split(' ')
-                .last()
-                .unwrap()
-                .parse::<u64>()
-                .unwrap(),
-            target_false: lines
-                .get(5)
-                .unwrap()
-                .split(' ')
-                .last()
-                .unwrap()
-                .parse::<u64>()
-                .unwrap(),
-        };
-
-        itemss.push(VecDeque::from(items));
-        monkies.push(monkey);
-    }
-    let mut inspects: Vec<u64> = vec![0; monkies.len()];
-
-    let mut modulo = 1;
-    for monkey in &monkies {
-        modulo *= monkey.divisible_by
-    }
-
-    // one round
-    for i in 0..10000 {
-        for (j, monkey) in monkies.iter_mut().enumerate() {
-            while itemss.get(j).unwrap().len() > 0 {
-                let mut worry_level = itemss.get_mut(j).unwrap().pop_front().unwrap();
-                let math = &monkey.operation;
-                let left_amount = math.left.parse::<u64>().unwrap_or(worry_level);
-                let right_amount = math.right.parse::<u64>().unwrap_or(worry_level);
-                match math.sign {
-                    Plus => worry_level = left_amount + right_amount,
-                    Minus => worry_level = left_amount - right_amount,
-                    Multiply => worry_level = left_amount * right_amount,
-                }
-                worry_level = worry_level % modulo;
-                if worry_level % monkey.divisible_by == 0 {
-                    itemss
-                        .get_mut(monkey.target_true as usize)
-                        .unwrap()
-                        .push_back(worry_level);
-                } else {
-                    itemss
-                        .get_mut(monkey.target_false as usize)
-                        .unwrap()
-                        .push_back(worry_level);
-                }
-                inspects[j] = inspects.get(j).unwrap_or(&0) + 1;
-            }
-        }
-    }
-    inspects.sort();
-    inspects.reverse();
-    Some(inspects[0] * inspects[1])
-}
 
 fn main() {
     let input = &advent_of_code::read_file("inputs", 11);
     advent_of_code::solve!(1, part_one, input);
     advent_of_code::solve!(2, part_two, input);
+}
+
+enum Part{
+    One,
+    Two
 }
 
 struct Monkey {
