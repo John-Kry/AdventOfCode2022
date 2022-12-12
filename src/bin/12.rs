@@ -1,5 +1,6 @@
-use std::collections::VecDeque;
 use crate::Part::{One, Two};
+use std::collections::VecDeque;
+use std::convert::identity;
 
 pub fn part_one(input: &str) -> Option<u32> {
     let mut grid = Grid::new(input);
@@ -19,6 +20,7 @@ pub fn part_one(input: &str) -> Option<u32> {
 
 pub fn part_two(input: &str) -> Option<u32> {
     let mut grid = Grid::new(input);
+    // Set starting to end, and search for 'a'
     grid.start = grid.end.clone();
 
     let mut queue: VecDeque<(Pos, u32)> = VecDeque::new();
@@ -34,25 +36,17 @@ pub fn part_two(input: &str) -> Option<u32> {
     grid.shortest_path(queue, Two)
 }
 
-
-
-fn is_valid(part:Part, curr:(u32,bool), next:(u32,bool) )->bool{
+fn is_valid(part: Part, curr: (u32, bool), next: (u32, bool)) -> bool {
     return match part {
-        One => {
-            (next.0 as i32 - curr.0 as i32) <= 1
-        }
-        Two => {
-            (curr.0 as i32 - next.0 as i32) <= 1
-        }
-    }
+        One => (next.0 as i32 - curr.0 as i32) <= 1,
+        Two => (curr.0 as i32 - next.0 as i32) <= 1,
+    };
 }
 
-
-
 #[derive(Clone, Copy)]
-enum Part{
+enum Part {
     One,
-    Two
+    Two,
 }
 
 fn main() {
@@ -78,9 +72,7 @@ struct Pos {
 impl Pos {}
 
 impl Grid {
-
     fn shortest_path(&mut self, mut queue: VecDeque<(Pos, u32)>, part: Part) -> Option<u32> {
-
         while queue.len() > 0 {
             let (v, count) = queue.pop_front().unwrap();
             let curr = self.get(v.x, v.y).unwrap();
@@ -98,7 +90,6 @@ impl Grid {
                 }
             }
 
-            // left
             let left = self.new_pos(v.x as i32 - 1, v.y as i32);
             let right = self.new_pos(v.x as i32 + 1, v.y as i32);
             let up = self.new_pos(v.x as i32, v.y as i32 + 1);
@@ -110,20 +101,18 @@ impl Grid {
             dirs.push(up);
             dirs.push(down);
 
-            dirs.iter().for_each(|a| {
-                if let Some(d) = a {
-                    if let Some(next) = self.get(d.x, d.y) {
-                        if next.1 == false && is_valid(part, curr,next)
-                        {
-                            self.set_visited(d.x, d.y);
-                            queue.push_back((d.clone(), count + 1));
-                        }
+            dirs.iter().filter_map(|x| x.as_ref()).for_each(|d| {
+                if let Some(next) = self.get(d.x, d.y) {
+                    if next.1 == false && is_valid(part, curr, next) {
+                        self.set_visited(d.x, d.y);
+                        queue.push_back((d.clone(), count + 1));
                     }
                 }
             })
         }
         None
     }
+
     fn new_pos(&self, x: i32, y: i32) -> Option<Pos> {
         if x < 0 || y < 0 || x as usize >= self.x_len || y as usize >= self.y_len {
             return None;
@@ -133,15 +122,18 @@ impl Grid {
             y: y as usize,
         })
     }
+
     fn get(&self, x: usize, y: usize) -> Option<(u32, bool)> {
         if let Some(poss) = self.data.get(x as usize) {
             return poss.get(y).copied();
         }
         None
     }
+
     fn set_visited(&mut self, x: usize, y: usize) {
         self.data.get_mut(x).unwrap().get_mut(y).unwrap().1 = true
     }
+
     fn new(input: &str) -> Self {
         let lines = input.lines();
         let x_len = lines.clone().next().unwrap().len();
@@ -163,7 +155,7 @@ impl Grid {
                     end.x = curr_x;
                     end.y = curr.len();
                     curr.push(('z' as u32, false))
-                }else{
+                } else {
                     curr.push((c as u32, false))
                 }
             });
