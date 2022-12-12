@@ -9,25 +9,12 @@ pub fn part_one(input: &str) -> Option<u32> {
         .data
         .get_mut(grid.start.x as usize)
         .unwrap()
-        .get_mut(grid.end.y as usize)
+        .get_mut(grid.start.y as usize)
         .unwrap();
     data.1 = true;
     queue.push_back((grid.start, 0));
 
     grid.shortest_path(queue, One)
-}
-
-
-
-fn is_valid(part:Part, curr:(u32,bool), next:(u32,bool) )->bool{
-    return match part {
-        One => {
-            (next.0 as i32 - curr.0 as i32) <= 1
-        }
-        Two => {
-            (curr.0 as i32 - next.0 as i32) <= 1
-        }
-    }
 }
 
 pub fn part_two(input: &str) -> Option<u32> {
@@ -46,6 +33,21 @@ pub fn part_two(input: &str) -> Option<u32> {
     queue.push_back((grid.start, 0));
     grid.shortest_path(queue, Two)
 }
+
+
+
+fn is_valid(part:Part, curr:(u32,bool), next:(u32,bool) )->bool{
+    return match part {
+        One => {
+            (next.0 as i32 - curr.0 as i32) <= 1
+        }
+        Two => {
+            (curr.0 as i32 - next.0 as i32) <= 1
+        }
+    }
+}
+
+
 
 #[derive(Clone, Copy)]
 enum Part{
