@@ -1,20 +1,13 @@
 use crate::Part::{One, Two};
 use std::collections::VecDeque;
-use std::convert::identity;
 
 pub fn part_one(input: &str) -> Option<u32> {
     let mut grid = Grid::new(input);
 
     let mut queue: VecDeque<(Pos, u32)> = VecDeque::new();
-    let data = grid
-        .data
-        .get_mut(grid.start.x as usize)
-        .unwrap()
-        .get_mut(grid.start.y as usize)
-        .unwrap();
-    data.1 = true;
-    queue.push_back((grid.start, 0));
+    grid.get_mut(grid.start).unwrap().1 = true;
 
+    queue.push_back((grid.start, 0));
     grid.shortest_path(queue, One)
 }
 
@@ -24,13 +17,7 @@ pub fn part_two(input: &str) -> Option<u32> {
     grid.start = grid.end.clone();
 
     let mut queue: VecDeque<(Pos, u32)> = VecDeque::new();
-    let data = grid
-        .data
-        .get_mut(grid.start.x as usize)
-        .unwrap()
-        .get_mut(grid.start.y as usize)
-        .unwrap();
-    data.1 = true;
+    grid.get_mut(grid.start).unwrap().1 = true;
 
     queue.push_back((grid.start, 0));
     grid.shortest_path(queue, Two)
@@ -69,10 +56,9 @@ struct Pos {
     y: usize,
 }
 
-impl Pos {}
-
 impl Grid {
     fn shortest_path(&mut self, mut queue: VecDeque<(Pos, u32)>, part: Part) -> Option<u32> {
+        const A:u32 = 'a' as u32;
         while queue.len() > 0 {
             let (v, count) = queue.pop_front().unwrap();
             let curr = self.get(v.x, v.y).unwrap();
@@ -84,24 +70,20 @@ impl Grid {
                     }
                 }
                 Two => {
-                    if curr.0 == ('a' as u32) {
+                    if curr.0 == A {
                         return Some(count);
                     }
                 }
             }
 
-            let left = self.new_pos(v.x as i32 - 1, v.y as i32);
-            let right = self.new_pos(v.x as i32 + 1, v.y as i32);
-            let up = self.new_pos(v.x as i32, v.y as i32 + 1);
-            let down = self.new_pos(v.x as i32, v.y as i32 - 1);
+            let dirs = vec![(0,-1), (-1,0), (1,0), (0,1)];
 
-            let mut dirs: Vec<Option<Pos>> = Vec::new();
-            dirs.push(left);
-            dirs.push(right);
-            dirs.push(up);
-            dirs.push(down);
+            let moves =dirs.iter().filter_map(|(dx,dy)|{
+                self.new_pos(v.x as i32 + dx, v.y as i32 + dy)
+            }).collect::<Vec<Pos>>();
 
-            dirs.iter().filter_map(|x| x.as_ref()).for_each(|d| {
+
+            moves.iter().for_each(|d| {
                 if let Some(next) = self.get(d.x, d.y) {
                     if next.1 == false && is_valid(part, curr, next) {
                         self.set_visited(d.x, d.y);
@@ -126,6 +108,13 @@ impl Grid {
     fn get(&self, x: usize, y: usize) -> Option<(u32, bool)> {
         if let Some(poss) = self.data.get(x as usize) {
             return poss.get(y).copied();
+        }
+        None
+    }
+
+    fn get_mut(&mut self, pos:Pos) -> Option<&mut (u32, bool)> {
+        if let Some(poss) = self.data.get_mut(pos.x as usize) {
+            return poss.get_mut(pos.y);
         }
         None
     }
