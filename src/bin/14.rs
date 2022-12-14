@@ -1,5 +1,3 @@
-use itertools::Itertools;
-use std::borrow::Borrow;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::str::Lines;
@@ -160,6 +158,7 @@ struct Pos {
     y: i32,
     kind: Kind,
 }
+
 impl Hash for Pos {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.x.hash(state);
@@ -201,6 +200,7 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    use crate::Kind::Sand;
     use super::*;
 
     #[test]
@@ -229,6 +229,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 14);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(93));
     }
 }
