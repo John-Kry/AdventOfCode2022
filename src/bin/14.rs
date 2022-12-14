@@ -1,5 +1,5 @@
-use std::borrow::Borrow;
 use itertools::Itertools;
+use std::borrow::Borrow;
 use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 use std::str::Lines;
@@ -16,33 +16,31 @@ pub fn part_one(input: &str) -> Option<u32> {
         };
         loop {
             let mut check = sand.clone();
-            check.y+=1;
+            check.y += 1;
             let mut left = sand.clone();
-            left.x-=1;
-            left.y+=1;
+            left.x -= 1;
+            left.y += 1;
             let mut right = sand.clone();
-            right.x+=1;
-            right.y+=1;
+            right.x += 1;
+            right.y += 1;
             if !set.contains(&check) {
-                sand.y +=1;
-            }else if !set.contains(&left) {
-                sand.y+=1;
-                sand.x-=1;
-            }else if !set.contains(&right){
-                sand.y+=1;
-                sand.x+=1
-            }else{
+                sand.y += 1;
+            } else if !set.contains(&left) {
+                sand.y += 1;
+                sand.x -= 1;
+            } else if !set.contains(&right) {
+                sand.y += 1;
+                sand.x += 1
+            } else {
                 set.insert(sand);
                 break;
             }
-            if sand.y >= abyss_y{
-                return Some(set.iter().filter(|s|s.kind == Kind::Sand).count()as u32);
+            if sand.y >= abyss_y {
+                return Some(set.iter().filter(|s| s.kind == Kind::Sand).count() as u32);
             }
         }
     }
 }
-
-
 
 fn print(set: &HashSet<Pos>) {
     for y in 0..=9 {
@@ -61,7 +59,7 @@ fn print(set: &HashSet<Pos>) {
     }
 }
 
-fn dir(mut prev: Option<Pos>, new_pos: Pos) -> Option<(i32, i32)> {
+fn dir(prev: Option<Pos>, new_pos: Pos) -> Option<(i32, i32)> {
     if prev.is_some() {
         if prev.unwrap().x == new_pos.x {
             if prev.unwrap().y < new_pos.y {
@@ -85,46 +83,45 @@ pub fn part_two(input: &str) -> Option<u32> {
     let mut set = parse(lines);
     let abyss_y = set.iter().map(|s| s.y).max().unwrap();
     for i in -1000..1000 {
-        set.insert(Pos{
+        set.insert(Pos {
             x: i,
-            y: abyss_y +2,
+            y: abyss_y + 2,
             kind: Kind::Wall,
         });
     }
-    dbg!(abyss_y);
-    let origin = Pos{x:500,y:0,kind:Kind::Open};
+    let origin = Pos {
+        x: 500,
+        y: 0,
+        kind: Kind::Sand,
+    };
     loop {
-
-        if  set.contains(&origin){
-            return Some(set.iter().filter(|s|s.kind == Kind::Sand).count()as u32);
+        if set.contains(&origin) {
+            return Some(set.iter().filter(|s| s.kind == Kind::Sand).count() as u32);
         }
-        let mut sand = Pos {
-            x: 500,
-            y: 0,
-            kind: Kind::Sand,
-        };
+        let mut sand = origin.clone();
         loop {
-            let mut check = sand.clone();
-            check.y+=1;
             let mut left = sand.clone();
-            left.x-=1;
-            left.y+=1;
+            left.x -= 1;
+            left.y += 1;
             let mut right = sand.clone();
-            right.x+=1;
-            right.y+=1;
-            if !set.contains(&check) {
-                sand.y +=1;
-            }else if !set.contains(&left) {
-                sand.y+=1;
-                sand.x-=1;
-            }else if !set.contains(&right){
-                sand.y+=1;
-                sand.x+=1
-            }else{
+            right.x += 1;
+            right.y += 1;
+            if !set.contains(&Pos {
+                x: sand.x,
+                y: sand.y + 1,
+                kind: Kind::Wall,
+            }) {
+                sand.y += 1;
+            } else if !set.contains(&left) {
+                sand.y += 1;
+                sand.x -= 1;
+            } else if !set.contains(&right) {
+                sand.y += 1;
+                sand.x += 1
+            } else {
                 set.insert(sand);
                 break;
             }
-
         }
     }
 }
@@ -190,11 +187,11 @@ impl Kind {
 
 impl PartialEq<Self> for Pos {
     fn eq(&self, other: &Self) -> bool {
-        self.x == other .x && self.y == other.y
+        self.x == other.x && self.y == other.y
     }
 }
 
-impl Eq for Pos{}
+impl Eq for Pos {}
 
 fn main() {
     let input = &advent_of_code::read_file("inputs", 14);
@@ -213,14 +210,14 @@ mod tests {
     }
 
     #[test]
-    fn poggers(){
-        let mut set:HashSet<Pos> = HashSet::new();
-        set.insert(Pos{
+    fn poggers() {
+        let mut set: HashSet<Pos> = HashSet::new();
+        set.insert(Pos {
             x: 0,
             y: 0,
             kind: Kind::Wall,
         });
-        set.insert(Pos{
+        set.insert(Pos {
             x: 0,
             y: 0,
             kind: Kind::Sand,
