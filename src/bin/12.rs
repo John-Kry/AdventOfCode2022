@@ -58,7 +58,7 @@ struct Pos {
 
 impl Grid {
     fn shortest_path(&mut self, mut queue: VecDeque<(Pos, u32)>, part: Part) -> Option<u32> {
-        const A:u32 = 'a' as u32;
+        const A: u32 = 'a' as u32;
         while queue.len() > 0 {
             let (v, count) = queue.pop_front().unwrap();
             let curr = self.get(v.x, v.y).unwrap();
@@ -76,12 +76,12 @@ impl Grid {
                 }
             }
 
-            let dirs = vec![(0,-1), (-1,0), (1,0), (0,1)];
+            let dirs = vec![(0, -1), (-1, 0), (1, 0), (0, 1)];
 
-            let moves =dirs.iter().filter_map(|(dx,dy)|{
-                self.new_pos(v.x as i32 + dx, v.y as i32 + dy)
-            }).collect::<Vec<Pos>>();
-
+            let moves = dirs
+                .iter()
+                .filter_map(|(dx, dy)| self.new_pos(v.x as i32 + dx, v.y as i32 + dy))
+                .collect::<Vec<Pos>>();
 
             moves.iter().for_each(|d| {
                 if let Some(next) = self.get(d.x, d.y) {
@@ -112,7 +112,7 @@ impl Grid {
         None
     }
 
-    fn get_mut(&mut self, pos:Pos) -> Option<&mut (u32, bool)> {
+    fn get_mut(&mut self, pos: Pos) -> Option<&mut (u32, bool)> {
         if let Some(poss) = self.data.get_mut(pos.x as usize) {
             return poss.get_mut(pos.y);
         }
