@@ -1,71 +1,8 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{HashSet};
 use std::ops::Range;
 
 pub fn part_one(input: &str) -> Option<i32> {
-    let lines = input.lines();
-    let mut sensors:Vec<Sensor> = Vec::default();
-    let mut beacons: HashSet<(i32, i32)> = HashSet::new();
-    lines.for_each(|line| {
-        let split = line.split(' ');
-        dbg!(&split);
-        let sensor_string_x = split.clone().nth(2).unwrap();
-        dbg!(&sensor_string_x);
-        let sensor_x = sensor_string_x
-            .split_once('=')
-            .unwrap()
-            .1
-            .replace(',',"")
-            .parse::<i32>()
-            .unwrap();
-        let sensor_string_y = split.clone().nth(3).unwrap();
-        dbg!(sensor_string_y);
-        let sensor_y = sensor_string_y
-            .split_once('=')
-            .unwrap()
-            .1
-            .replace(':',"")
-            .parse::<i32>()
-            .unwrap();
-        let beacon_string_x = split.clone().nth(8).unwrap();
-        let beacon_x = beacon_string_x
-            .split_once('=')
-            .unwrap()
-            .1
-            .replace(',',"")
-            .parse::<i32>()
-            .unwrap();
-        let beacon_string_y = split.clone().nth(9).unwrap();
-        let beacon_y = beacon_string_y
-            .split_once('=')
-            .unwrap()
-            .1
-            .replace(',',"")
-            .parse::<i32>()
-            .unwrap();
-
-        let sensor = Pos {
-            x: sensor_x,
-            y: sensor_y,
-        };
-        let beacon = Pos {
-            x: beacon_x,
-            y: beacon_y,
-        };
-        dbg!(&beacon);
-        beacons.insert((beacon.x,beacon.y));
-        let distance = (sensor.x - beacon.x).abs() + (sensor_y - beacon_y).abs();
-        let start_x = sensor.x - distance;
-        let start_y = sensor.y - distance;
-        let end_x = sensor.x + distance;
-        let end_y = sensor.y + distance;
-        sensors.push(Sensor{
-            beacon_distance: distance,
-            x_bound: start_x..end_x,
-            y_bound: start_y..end_y ,
-            nearest_beacon: beacon,
-            pos: sensor
-        });
-    });
+    let sensors = parse(input);
     let mut x_set:HashSet<i32>= HashSet::new();
     sensors.iter().for_each(|sensor|{
         if let Some(positions) = sensor.scan_in_y(2000000){
@@ -84,70 +21,7 @@ fn dis(x1: i32, y1: i32, x2: i32, y2: i32) -> i32 {
 }
 
 pub fn part_two(input: &str) -> Option<i64> {
-    let lines = input.lines();
-    let mut sensors:Vec<Sensor> = Vec::default();
-    let mut beacons: HashSet<(i32, i32)> = HashSet::new();
-    lines.for_each(|line| {
-        let split = line.split(' ');
-        dbg!(&split);
-        let sensor_string_x = split.clone().nth(2).unwrap();
-        dbg!(&sensor_string_x);
-        let sensor_x = sensor_string_x
-            .split_once('=')
-            .unwrap()
-            .1
-            .replace(',',"")
-            .parse::<i32>()
-            .unwrap();
-        let sensor_string_y = split.clone().nth(3).unwrap();
-        dbg!(sensor_string_y);
-        let sensor_y = sensor_string_y
-            .split_once('=')
-            .unwrap()
-            .1
-            .replace(':',"")
-            .parse::<i32>()
-            .unwrap();
-        let beacon_string_x = split.clone().nth(8).unwrap();
-        let beacon_x = beacon_string_x
-            .split_once('=')
-            .unwrap()
-            .1
-            .replace(',',"")
-            .parse::<i32>()
-            .unwrap();
-        let beacon_string_y = split.clone().nth(9).unwrap();
-        let beacon_y = beacon_string_y
-            .split_once('=')
-            .unwrap()
-            .1
-            .replace(',',"")
-            .parse::<i32>()
-            .unwrap();
-
-        let sensor = Pos {
-            x: sensor_x,
-            y: sensor_y,
-        };
-        let beacon = Pos {
-            x: beacon_x,
-            y: beacon_y,
-        };
-        dbg!(&beacon);
-        beacons.insert((beacon.x,beacon.y));
-        let distance = (sensor.x - beacon.x).abs() + (sensor_y - beacon_y).abs();
-        let start_x = sensor.x - distance;
-        let start_y = sensor.y - distance;
-        let end_x = sensor.x + distance;
-        let end_y = sensor.y + distance;
-        sensors.push(Sensor{
-            beacon_distance: distance,
-            x_bound: start_x..end_x,
-            y_bound: start_y..end_y ,
-            nearest_beacon: beacon,
-            pos: sensor
-        });
-    });
+    let sensors  = parse(input);
     for s in sensors.iter() {
       let points = s.generate_outline();
         for p in points {
@@ -197,8 +71,8 @@ impl Sensor{
         return self.beacon_distance + 1;
     }
 
-    fn generate_outline(&self) -> HashSet<Pos> {
-        let mut v:HashSet<Pos> = HashSet::new();
+    fn generate_outline(&self) -> Vec<Pos> {
+        let mut v:Vec<Pos> = Vec::new();
         for x in -self.plus_one()..=self.plus_one() {
             let yup = self.plus_one() - x.abs();
             if yup == 0 {
@@ -206,9 +80,8 @@ impl Sensor{
             }
             let pos1 = Pos { x: self.pos.x + x, y: self.pos.y + yup };
             let pos2 = Pos { x: self.pos.x + x, y: self.pos.y - yup };
-            assert_eq!(x.abs() + yup.abs(), self.plus_one());
-            v.insert(pos1);
-            v.insert(pos2);
+            v.push(pos1);
+            v.push(pos2);
         }
         return v;
     }
@@ -236,6 +109,67 @@ fn main() {
     advent_of_code::solve!(2, part_two, input);
 }
 
+fn parse(input: &str) -> Vec<Sensor>{
+    let lines = input.lines();
+    let mut sensors:Vec<Sensor> = Vec::default();
+    lines.for_each(|line| {
+        let split = line.split(' ');
+        let sensor_string_x = split.clone().nth(2).unwrap();
+        let sensor_x = sensor_string_x
+            .split_once('=')
+            .unwrap()
+            .1
+            .replace(',',"")
+            .parse::<i32>()
+            .unwrap();
+        let sensor_string_y = split.clone().nth(3).unwrap();
+        let sensor_y = sensor_string_y
+            .split_once('=')
+            .unwrap()
+            .1
+            .replace(':',"")
+            .parse::<i32>()
+            .unwrap();
+        let beacon_string_x = split.clone().nth(8).unwrap();
+        let beacon_x = beacon_string_x
+            .split_once('=')
+            .unwrap()
+            .1
+            .replace(',',"")
+            .parse::<i32>()
+            .unwrap();
+        let beacon_string_y = split.clone().nth(9).unwrap();
+        let beacon_y = beacon_string_y
+            .split_once('=')
+            .unwrap()
+            .1
+            .replace(',',"")
+            .parse::<i32>()
+            .unwrap();
+
+        let sensor = Pos {
+            x: sensor_x,
+            y: sensor_y,
+        };
+        let beacon = Pos {
+            x: beacon_x,
+            y: beacon_y,
+        };
+        let distance = (sensor.x - beacon.x).abs() + (sensor_y - beacon_y).abs();
+        let start_x = sensor.x - distance;
+        let start_y = sensor.y - distance;
+        let end_x = sensor.x + distance;
+        let end_y = sensor.y + distance;
+        sensors.push(Sensor{
+            beacon_distance: distance,
+            x_bound: start_x..end_x,
+            y_bound: start_y..end_y ,
+            nearest_beacon: beacon,
+            pos: sensor
+        });
+    });
+    sensors
+}
 #[cfg(test)]
 mod tests {
     use super::*;
