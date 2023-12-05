@@ -200,8 +200,8 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
-    use crate::Kind::Sand;
     use super::*;
+    use crate::Kind::Sand;
 
     #[test]
     fn test_part_one() {
