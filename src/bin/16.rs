@@ -1,10 +1,13 @@
-use petgraph::graph::{DiGraph, Node, NodeIndex};
-use petgraph::visit::{Bfs, Dfs, IntoNodeIdentifiers, NodeRef};
-use petgraph::{Direction, EdgeDirection, Graph, Outgoing};
+use petgraph::algo::floyd_warshall;
+use petgraph::graph::{DiGraph, NodeIndex};
+use petgraph::visit::{IntoNodeIdentifiers, NodeRef};
+use petgraph::{Graph, Outgoing};
 use std::collections::{HashMap, HashSet, VecDeque};
+use std::hash::{Hash, Hasher};
 use std::ops::Index;
+use itertools::Itertools;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Valve {
     status: Status,
     flow_rate: u32,
@@ -12,7 +15,7 @@ struct Valve {
     targets: Vec<String>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum Status {
     Closed,
     Open,
@@ -20,7 +23,6 @@ enum Status {
 
 pub fn part_one(input: &str) -> Option<u32> {
     let lines: Vec<_> = input.lines().collect();
-    let mut g = DiGraph::<&Valve, ()>::new();
     let valves: Vec<_> = lines
         .iter()
         .map(|line| {
@@ -43,46 +45,94 @@ pub fn part_one(input: &str) -> Option<u32> {
             };
         })
         .collect();
-    let mut s_to_idx = HashMap::<String, NodeIndex>::new();
-    let mut iter = valves.iter();
-    let first = iter.next().unwrap();
-    let a = g.add_node(first);
-    s_to_idx.insert(first.name.to_string(), a);
 
-    iter.for_each(|v| {
-        s_to_idx.insert(v.name.to_string(), g.add_node(v));
-    });
-    valves.iter().for_each(|v| {
-        let idx = s_to_idx.get(&v.name.to_string()).unwrap();
-        v.targets.iter().for_each(|t| {
-            g.add_edge(idx.to_owned(), s_to_idx.get(t).unwrap().to_owned(), ());
-        })
-    });
+    let g = ValveGraph::new(valves);
 
+    let mut q: VecDeque<(String, u32, u32, HashSet<String>)> = VecDeque::new();
+    q.push_front(("AA".to_string(), 30, 0, HashSet::new()));
 
-    let mut stack = VecDeque::<(NodeIndex,u32)>::new();
-    stack.push_front((a,0));
-    let mut set = HashSet::<(u32,NodeIndex)>::new();
-    let mut set2 = HashSet::<NodeIndex>::new();
-    while let Some((node,depth)) = stack.pop_front(){
-        if set2.contains(&node){
-            continue;
+    let mut max_set: HashMap<String, u32> = HashMap::new();
+    while let Some((current_valve, time_remaining, total_relief, opened)) = q.pop_front() {
+        let neighbors = g.get_neighbors(current_valve);
+        for (n, v) in neighbors.iter() {
+            let t_remain = time_remaining - 1 - steps;
+            let mut o = opened.clone();
+            if { o.contains(v.name.as_str()) } {
+                continue;
+            }
+            let t_relief = total_relief + (t_remain * v.flow_rate);
+            let hash = o.iter().join("");
+            match max_set.get(&hash) {
+                None => {
+                    max_set.insert(hash, t_relief);
+                }
+                Some(&x) => {
+                    if t_relief > x {
+                        max_set.insert(hash, t_relief);
+                    }
+                }
+            }
+            o.insert(v.name.clone());
+            q.push_front((v.name.clone(), t_remain, t_relief, o));
         }
-        let value = (30 -1- depth) * g.node_weight(node).unwrap().flow_rate;
-        set.insert((value,node));
-        set2.insert(node);
-        g.neighbors_directed(node, Outgoing).into_iter().for_each(|n|{
-            stack.push_front((n,depth+1));
-        });
-        dbg!(depth);
-        dbg!(node);
     }
-    dbg!(set);
+    dbg!(&max_set);
 
-    Some(23)
+    Some(max_set.values().max().unwrap().clone())
 }
 
-// Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
+struct ValveGraph<T> {
+    g: Graph<T, ()>,
+    map: HashMap<String, NodeIndex>,
+    node_to_node: HashMap<(NodeIndex, NodeIndex), i32>,
+}
+
+impl ValveGraph<Valve> {
+    fn new(valves: Vec<Valve>) -> Self {
+        let mut g = DiGraph::<Valve, ()>::new();
+        let mut s_to_idx = HashMap::<String, NodeIndex>::new();
+        let mut iter = valves.iter();
+        let first = iter.next().unwrap();
+        let a = g.add_node(first.clone());
+        s_to_idx.insert(first.name.to_string(), a);
+
+        iter.for_each(|v| {
+            s_to_idx.insert(v.name.to_string(), g.add_node(v.clone()));
+        });
+        valves.iter().for_each(|v| {
+            let idx = s_to_idx.get(&v.name.to_string()).unwrap();
+            v.targets.iter().for_each(|t| {
+                g.add_edge(idx.to_owned(), s_to_idx.get(t).unwrap().to_owned(), ());
+            })
+        });
+        let fw = floyd_warshall(&g, |_| 1).unwrap();
+        ValveGraph {
+            g,
+            map: s_to_idx,
+            node_to_node: fw,
+        }
+    }
+    fn dist(&self, s1: String, s2: String) -> &i32 {
+        return self
+            .node_to_node
+            .get(&(self.get_index(s1), self.get_index(s2)))
+            .unwrap();
+    }
+
+    fn get_neighbors(&self, s: String) -> Vec<(NodeIndex, &Valve)> {
+        let i = self.get_index(s);
+        return self
+            .g
+            .neighbors_directed(i, Outgoing)
+            .map(|n| (n, self.g.index(n)))
+            .collect::<Vec<_>>();
+    }
+
+    fn get_index(&self, s: String) -> NodeIndex {
+        return self.map.get(s.as_str()).unwrap().clone();
+    }
+}
+
 pub fn part_two(input: &str) -> Option<u32> {
     None
 }
@@ -100,7 +150,7 @@ mod tests {
     #[test]
     fn test_part_one() {
         let input = advent_of_code::read_file("examples", 16);
-        assert_eq!(part_one(&input), None);
+        assert_eq!(part_one(&input), Some(1651));
     }
 
     #[test]
