@@ -1,11 +1,11 @@
+use itertools::{assert_equal, Itertools, sorted};
 use petgraph::algo::floyd_warshall;
 use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::visit::{NodeRef};
+use petgraph::visit::NodeRef;
 use petgraph::{Graph, Outgoing};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::hash::{Hasher};
+use std::hash::Hasher;
 use std::ops::Index;
-use itertools::{assert_equal, Itertools};
 
 #[derive(Debug, Clone)]
 struct Valve {
@@ -51,7 +51,7 @@ pub fn part_one(input: &str) -> Option<i32> {
 
     let mut max_set: HashMap<String, i32> = HashMap::new();
     while let Some((current_valve, time_remaining, total_relief, opened)) = q.pop_front() {
-        for (node,steps) in g.get_others(current_valve.as_str()).iter() {
+        for (node, steps) in g.get_others(current_valve.as_str()).iter() {
             let v = g.weight(node.clone());
             let t_remain = time_remaining - 1 - steps;
             if t_remain.is_negative() || v.flow_rate == 0 {
@@ -113,7 +113,7 @@ impl ValveGraph<Valve> {
             .get(&(self.get_index(s1.as_str()), self.get_index(s2.as_str())))
             .unwrap();
     }
-    fn weight(&self, i:NodeIndex) -> &Valve {
+    fn weight(&self, i: NodeIndex) -> &Valve {
         return self.g.node_weight(i).unwrap();
     }
 
@@ -126,11 +126,13 @@ impl ValveGraph<Valve> {
             .collect::<Vec<_>>();
     }
 
-    fn get_others(&self, s:&str) -> Vec<(NodeIndex, i32)> {
+    fn get_others(&self, s: &str) -> Vec<(NodeIndex, i32)> {
         let i = self.get_index(s);
-        return self.g.node_indices().map(|x|{
-            (x,self.node_to_node.get(&(i,x)).unwrap().clone())
-        }).collect::<Vec<_>>();
+        return self
+            .g
+            .node_indices()
+            .map(|x| (x, self.node_to_node.get(&(i, x)).unwrap().clone()))
+            .collect::<Vec<_>>();
     }
 
     fn get_index(&self, s: &str) -> NodeIndex {
@@ -165,11 +167,11 @@ pub fn part_two(input: &str) -> Option<i32> {
     let g = ValveGraph::new(valves);
 
     let mut q: VecDeque<(String, i32, i32, HashSet<String>)> = VecDeque::new();
-    q.push_front(("AA".to_string(), 30, 0, HashSet::new()));
+    q.push_front(("AA".to_string(), 26, 0, HashSet::new()));
 
-    let mut max_set: HashMap<String, i32> = HashMap::new();
+    let mut max_set: HashMap<String, (i32, HashSet<String>)> = HashMap::new();
     while let Some((current_valve, time_remaining, total_relief, opened)) = q.pop_front() {
-        for (node,steps) in g.get_others(current_valve.as_str()).iter() {
+        for (node, steps) in g.get_others(current_valve.as_str()).iter() {
             let v = g.weight(node.clone());
             let t_remain = time_remaining - 1 - steps;
             if t_remain.is_negative() || v.flow_rate == 0 {
@@ -180,22 +182,46 @@ pub fn part_two(input: &str) -> Option<i32> {
                 continue;
             }
             let t_relief = total_relief + (t_remain * v.flow_rate);
-            let hash = o.iter().join("");
+            o.insert(v.name.clone());
+            // IT DOES NEED TO BE ORDERED WTF
+            let hash = o.iter().sorted().join("");
             match max_set.get(&hash) {
                 None => {
-                    max_set.insert(hash, t_relief);
+                    max_set.insert(hash, (t_relief, o.clone()));
                 }
-                Some(&x) => {
-                    if t_relief > x {
-                        max_set.insert(hash, t_relief);
+                Some((x, _)) => {
+                    if t_relief > x.clone() {
+                        max_set.insert(hash, (t_relief, o.clone()));
                     }
                 }
             }
-            o.insert(v.name.clone());
             q.push_front((v.name.clone(), t_remain, t_relief, o));
         }
     }
-    Some(max_set.values().max().unwrap().clone())
+    let mut max = 0;
+    let solutions = max_set.values().map(|x| &x.1).collect::<Vec<_>>();
+    println!("here!");
+    dbg!(solutions.len());
+    let set_to_max = max_set
+        .values()
+        .map(|x| (x.clone().1.iter().sorted().join(""), x.0)).collect::<HashMap<String,i32>>();
+
+    solutions
+        .iter()
+        .combinations(2)
+        .filter(|x| {
+            return x[0].is_disjoint(&x[1]);
+        })
+        .for_each(|s| {
+            let a = s[0];
+            let b = s[1];
+            max = max.max(
+                set_to_max.get(a.iter().sorted().join("").as_str()).unwrap().clone()
+                    +
+                    set_to_max.get(b.iter().sorted().join("").as_str()).unwrap().clone()
+            );
+        });
+    Some(max)
 }
 
 fn main() {
@@ -217,6 +243,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let input = advent_of_code::read_file("examples", 16);
-        assert_eq!(part_two(&input), None);
+        assert_eq!(part_two(&input), Some(1707));
     }
 }
