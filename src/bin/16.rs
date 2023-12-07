@@ -1,10 +1,10 @@
-use itertools::{Itertools};
+use itertools::Itertools;
 use petgraph::algo::floyd_warshall;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::NodeRef;
 use petgraph::{Graph, Outgoing};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::hash::Hasher;
+use std::hash::{Hash, Hasher};
 use std::ops::Index;
 
 #[derive(Debug, Clone)]
@@ -31,7 +31,7 @@ pub fn part_one(input: &str) -> Option<i32> {
     while let Some((current_valve, time_remaining, total_relief, opened)) = q.pop_front() {
         for (node, steps) in g.get_others(current_valve.as_str()).iter() {
             let v = g.weight(node.clone());
-            let t_remain = time_remaining - 1 - steps;
+            let t_remain = time_remaining - 1 - steps.clone();
             if t_remain.is_negative() || v.flow_rate == 0 {
                 continue;
             }
@@ -104,12 +104,12 @@ impl ValveGraph<Valve> {
             .collect::<Vec<_>>();
     }
 
-    fn get_others(&self, s: &str) -> Vec<(NodeIndex, i32)> {
+    fn get_others(&self, s: &str) -> Vec<(NodeIndex, &i32)> {
         let i = self.get_index(s);
         return self
             .g
             .node_indices()
-            .map(|x| (x, self.node_to_node.get(&(i, x)).unwrap().clone()))
+            .map(|x| (x, self.node_to_node.get(&(i, x)).unwrap()))
             .collect::<Vec<_>>();
     }
 
@@ -123,62 +123,70 @@ pub fn part_two(input: &str) -> Option<i32> {
 
     let g = ValveGraph::new(valves);
 
-    let mut q: VecDeque<(String, i32, i32, HashSet<String>)> = VecDeque::new();
-    q.push_front(("AA".to_string(), 26, 0, HashSet::new()));
+    let mut q: VecDeque<(String, i32, i32, MyHash)> = VecDeque::new();
+    q.push_front(("AA".to_string(), 26, 0, MyHash::new()));
 
-    let mut max_set: HashMap<String, (i32, HashSet<String>)> = HashMap::new();
+    let mut max_set: HashMap<MyHash, (i32, MyHash)> = HashMap::new();
     while let Some((current_valve, time_remaining, total_relief, opened)) = q.pop_front() {
         for (node, steps) in g.get_others(current_valve.as_str()).iter() {
             let v = g.weight(node.clone());
-            let t_remain = time_remaining - 1 - steps;
+            let t_remain = time_remaining - 1 - steps.clone();
             if t_remain.is_negative() || v.flow_rate == 0 {
                 continue;
             }
-            let mut o = opened.clone();
-            if o.contains(v.name.as_str()) {
+            if opened.h.contains(v.name.as_str()) {
                 continue;
             }
             let t_relief = total_relief + (t_remain * v.flow_rate);
-            o.insert(v.name.clone());
+            let mut o = opened.clone();
+            o.h.insert(v.name.clone());
             // IT DOES NEED TO BE ORDERED WTF
-            let hash = o.iter().sorted().join("");
-            match max_set.get(&hash) {
+            match max_set.get_mut(&o.clone()) {
                 None => {
-                    max_set.insert(hash, (t_relief, o.clone()));
+                    max_set.insert(o.clone(), (t_relief, o.clone()));
                 }
-                Some((x, _)) => {
-                    if t_relief > x.clone() {
-                        max_set.insert(hash, (t_relief, o.clone()));
+                Some(x) => {
+                    if t_relief > x.0 {
+                        *x = (t_relief, o.clone());
                     }
                 }
             }
-            q.push_front((v.name.clone(), t_remain, t_relief, o));
+            q.push_front((v.name.clone(), t_remain, t_relief, o.clone()));
         }
     }
     let mut max = 0;
-    let solutions = max_set.values().map(|x| &x.1).collect::<Vec<_>>();
-    let set_to_max = max_set
-        .values()
-        .map(|x| (x.clone().1.iter().sorted().join(""), x.0)).collect::<HashMap<String,i32>>();
 
-    solutions
-        .iter()
-        .combinations(2)
-        .filter(|x| {
-            return x[0].is_disjoint(&x[1]);
+    max_set
+        .values()
+        .tuple_combinations::<(_, _)>()
+        .filter(|(a, b)| {
+            return a.1.h.is_disjoint(&b.1.h);
         })
-        .for_each(|s| {
-            let a = s[0];
-            let b = s[1];
-            max = max.max(
-                set_to_max.get(a.iter().sorted().join("").as_str()).unwrap().clone()
-                    +
-                    set_to_max.get(b.iter().sorted().join("").as_str()).unwrap().clone()
-            );
+        .for_each(|(a, b)| {
+            max = max.max(a.0 + &b.0);
         });
+
     Some(max)
 }
-fn generate_valves(input:&str)->Vec<Valve>{
+
+#[derive(Eq, PartialEq, Clone)]
+struct MyHash {
+    pub h: HashSet<String>,
+}
+
+impl MyHash {
+    fn new() -> Self {
+        Self { h: HashSet::new() }
+    }
+}
+
+impl Hash for MyHash {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let s = self.h.iter().sorted().join("");
+        s.hash(state);
+    }
+}
+fn generate_valves(input: &str) -> Vec<Valve> {
     let lines: Vec<_> = input.lines().collect();
     return lines
         .iter()
