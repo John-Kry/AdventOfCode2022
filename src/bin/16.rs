@@ -1,4 +1,4 @@
-use itertools::{assert_equal, Itertools, sorted};
+use itertools::{Itertools};
 use petgraph::algo::floyd_warshall;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::NodeRef;
@@ -21,29 +21,7 @@ enum Status {
 }
 
 pub fn part_one(input: &str) -> Option<i32> {
-    let lines: Vec<_> = input.lines().collect();
-    let valves: Vec<_> = lines
-        .iter()
-        .map(|line| {
-            let splits: Vec<_> = line.split(&[' ', ',']).collect();
-
-            let valve_name = splits[1];
-            let flow_rate = splits[4].split(&['=', ';']).collect::<Vec<&str>>()[1].to_string();
-            let targets: Vec<String> = splits[9..]
-                .to_vec()
-                .iter()
-                .filter(|&&c| c.len() > 0)
-                .map(|c| c.to_string())
-                .collect();
-
-            return Valve {
-                flow_rate: flow_rate.parse().unwrap(),
-                name: valve_name.to_string(),
-                targets,
-            };
-        })
-        .collect();
-
+    let valves = generate_valves(input);
     let g = ValveGraph::new(valves);
 
     let mut q: VecDeque<(String, i32, i32, HashSet<String>)> = VecDeque::new();
@@ -141,28 +119,7 @@ impl ValveGraph<Valve> {
 }
 
 pub fn part_two(input: &str) -> Option<i32> {
-    let lines: Vec<_> = input.lines().collect();
-    let valves: Vec<_> = lines
-        .iter()
-        .map(|line| {
-            let splits: Vec<_> = line.split(&[' ', ',']).collect();
-
-            let valve_name = splits[1];
-            let flow_rate = splits[4].split(&['=', ';']).collect::<Vec<&str>>()[1].to_string();
-            let targets: Vec<String> = splits[9..]
-                .to_vec()
-                .iter()
-                .filter(|&&c| c.len() > 0)
-                .map(|c| c.to_string())
-                .collect();
-
-            return Valve {
-                flow_rate: flow_rate.parse().unwrap(),
-                name: valve_name.to_string(),
-                targets,
-            };
-        })
-        .collect();
+    let valves = generate_valves(input);
 
     let g = ValveGraph::new(valves);
 
@@ -200,8 +157,6 @@ pub fn part_two(input: &str) -> Option<i32> {
     }
     let mut max = 0;
     let solutions = max_set.values().map(|x| &x.1).collect::<Vec<_>>();
-    println!("here!");
-    dbg!(solutions.len());
     let set_to_max = max_set
         .values()
         .map(|x| (x.clone().1.iter().sorted().join(""), x.0)).collect::<HashMap<String,i32>>();
@@ -223,7 +178,30 @@ pub fn part_two(input: &str) -> Option<i32> {
         });
     Some(max)
 }
+fn generate_valves(input:&str)->Vec<Valve>{
+    let lines: Vec<_> = input.lines().collect();
+    return lines
+        .iter()
+        .map(|line| {
+            let splits: Vec<_> = line.split(&[' ', ',']).collect();
 
+            let valve_name = splits[1];
+            let flow_rate = splits[4].split(&['=', ';']).collect::<Vec<&str>>()[1].to_string();
+            let targets: Vec<String> = splits[9..]
+                .to_vec()
+                .iter()
+                .filter(|&&c| c.len() > 0)
+                .map(|c| c.to_string())
+                .collect();
+
+            return Valve {
+                flow_rate: flow_rate.parse().unwrap(),
+                name: valve_name.to_string(),
+                targets,
+            };
+        })
+        .collect();
+}
 fn main() {
     let input = &advent_of_code::read_file("inputs", 16);
     advent_of_code::solve!(1, part_one, input);
