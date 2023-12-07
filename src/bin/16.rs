@@ -41,13 +41,13 @@ pub fn part_one(input: &str) -> Option<i32> {
             }
             let t_relief = total_relief + (t_remain * v.flow_rate);
             let hash = o.iter().join("");
-            match max_set.get(&hash) {
+            match max_set.get_mut(&hash) {
                 None => {
                     max_set.insert(hash, t_relief);
                 }
-                Some(&x) => {
-                    if t_relief > x {
-                        max_set.insert(hash, t_relief);
+                Some(x) => {
+                    if t_relief > x.clone() {
+                        *x = t_relief;
                     }
                 }
             }
