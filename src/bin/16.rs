@@ -1,16 +1,15 @@
 use petgraph::algo::floyd_warshall;
 use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::visit::{IntoNodeIdentifiers, NodeRef};
+use petgraph::visit::{NodeRef};
 use petgraph::{Graph, Outgoing};
 use std::collections::{HashMap, HashSet, VecDeque};
-use std::hash::{Hash, Hasher};
+use std::hash::{Hasher};
 use std::ops::Index;
-use itertools::Itertools;
+use itertools::{assert_equal, Itertools};
 
 #[derive(Debug, Clone)]
 struct Valve {
-    status: Status,
-    flow_rate: u32,
+    flow_rate: i32,
     name: String,
     targets: Vec<String>,
 }
@@ -21,7 +20,7 @@ enum Status {
     Open,
 }
 
-pub fn part_one(input: &str) -> Option<u32> {
+pub fn part_one(input: &str) -> Option<i32> {
     let lines: Vec<_> = input.lines().collect();
     let valves: Vec<_> = lines
         .iter()
@@ -38,7 +37,6 @@ pub fn part_one(input: &str) -> Option<u32> {
                 .collect();
 
             return Valve {
-                status: Status::Closed,
                 flow_rate: flow_rate.parse().unwrap(),
                 name: valve_name.to_string(),
                 targets,
@@ -48,16 +46,19 @@ pub fn part_one(input: &str) -> Option<u32> {
 
     let g = ValveGraph::new(valves);
 
-    let mut q: VecDeque<(String, u32, u32, HashSet<String>)> = VecDeque::new();
+    let mut q: VecDeque<(String, i32, i32, HashSet<String>)> = VecDeque::new();
     q.push_front(("AA".to_string(), 30, 0, HashSet::new()));
 
-    let mut max_set: HashMap<String, u32> = HashMap::new();
+    let mut max_set: HashMap<String, i32> = HashMap::new();
     while let Some((current_valve, time_remaining, total_relief, opened)) = q.pop_front() {
-        let neighbors = g.get_neighbors(current_valve);
-        for (n, v) in neighbors.iter() {
+        for (node,v) in g.get_neighbors(current_valve.as_str()).iter() {
+            let steps = g.node_to_node.get(&(g.get_index(current_valve.as_str()),node.clone())).unwrap();
             let t_remain = time_remaining - 1 - steps;
+            if t_remain.is_negative() {
+                continue;
+            }
             let mut o = opened.clone();
-            if { o.contains(v.name.as_str()) } {
+            if o.contains(v.name.as_str()) {
                 continue;
             }
             let t_relief = total_relief + (t_remain * v.flow_rate);
@@ -84,7 +85,7 @@ pub fn part_one(input: &str) -> Option<u32> {
 struct ValveGraph<T> {
     g: Graph<T, ()>,
     map: HashMap<String, NodeIndex>,
-    node_to_node: HashMap<(NodeIndex, NodeIndex), i32>,
+    pub node_to_node: HashMap<(NodeIndex, NodeIndex), i32>,
 }
 
 impl ValveGraph<Valve> {
@@ -106,6 +107,8 @@ impl ValveGraph<Valve> {
             })
         });
         let fw = floyd_warshall(&g, |_| 1).unwrap();
+        let pog =s_to_idx.get("II").unwrap();
+        println!("{}", pog.index());
         ValveGraph {
             g,
             map: s_to_idx,
@@ -115,11 +118,14 @@ impl ValveGraph<Valve> {
     fn dist(&self, s1: String, s2: String) -> &i32 {
         return self
             .node_to_node
-            .get(&(self.get_index(s1), self.get_index(s2)))
+            .get(&(self.get_index(s1.as_str()), self.get_index(s2.as_str())))
             .unwrap();
     }
+    fn weight(&self, i:NodeIndex) -> &Valve {
+        return self.g.node_weight(i).unwrap();
+    }
 
-    fn get_neighbors(&self, s: String) -> Vec<(NodeIndex, &Valve)> {
+    fn get_neighbors(&self, s: &str) -> Vec<(NodeIndex, &Valve)> {
         let i = self.get_index(s);
         return self
             .g
@@ -128,12 +134,12 @@ impl ValveGraph<Valve> {
             .collect::<Vec<_>>();
     }
 
-    fn get_index(&self, s: String) -> NodeIndex {
-        return self.map.get(s.as_str()).unwrap().clone();
+    fn get_index(&self, s: &str) -> NodeIndex {
+        return self.map.get(s).unwrap().clone();
     }
 }
 
-pub fn part_two(input: &str) -> Option<u32> {
+pub fn part_two(_input: &str) -> Option<i32> {
     None
 }
 
