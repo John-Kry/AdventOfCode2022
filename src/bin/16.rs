@@ -51,10 +51,10 @@ pub fn part_one(input: &str) -> Option<i32> {
 
     let mut max_set: HashMap<String, i32> = HashMap::new();
     while let Some((current_valve, time_remaining, total_relief, opened)) = q.pop_front() {
-        for (node,v) in g.get_neighbors(current_valve.as_str()).iter() {
-            let steps = g.node_to_node.get(&(g.get_index(current_valve.as_str()),node.clone())).unwrap();
+        for (node,steps) in g.get_others(current_valve.as_str()).iter() {
+            let v = g.weight(node.clone());
             let t_remain = time_remaining - 1 - steps;
-            if t_remain.is_negative() {
+            if t_remain.is_negative() || v.flow_rate == 0 {
                 continue;
             }
             let mut o = opened.clone();
@@ -77,8 +77,6 @@ pub fn part_one(input: &str) -> Option<i32> {
             q.push_front((v.name.clone(), t_remain, t_relief, o));
         }
     }
-    dbg!(&max_set);
-
     Some(max_set.values().max().unwrap().clone())
 }
 
@@ -92,12 +90,8 @@ impl ValveGraph<Valve> {
     fn new(valves: Vec<Valve>) -> Self {
         let mut g = DiGraph::<Valve, ()>::new();
         let mut s_to_idx = HashMap::<String, NodeIndex>::new();
-        let mut iter = valves.iter();
-        let first = iter.next().unwrap();
-        let a = g.add_node(first.clone());
-        s_to_idx.insert(first.name.to_string(), a);
 
-        iter.for_each(|v| {
+        valves.iter().for_each(|v| {
             s_to_idx.insert(v.name.to_string(), g.add_node(v.clone()));
         });
         valves.iter().for_each(|v| {
@@ -107,8 +101,6 @@ impl ValveGraph<Valve> {
             })
         });
         let fw = floyd_warshall(&g, |_| 1).unwrap();
-        let pog =s_to_idx.get("II").unwrap();
-        println!("{}", pog.index());
         ValveGraph {
             g,
             map: s_to_idx,
@@ -134,13 +126,76 @@ impl ValveGraph<Valve> {
             .collect::<Vec<_>>();
     }
 
+    fn get_others(&self, s:&str) -> Vec<(NodeIndex, i32)> {
+        let i = self.get_index(s);
+        return self.g.node_indices().map(|x|{
+            (x,self.node_to_node.get(&(i,x)).unwrap().clone())
+        }).collect::<Vec<_>>();
+    }
+
     fn get_index(&self, s: &str) -> NodeIndex {
         return self.map.get(s).unwrap().clone();
     }
 }
 
-pub fn part_two(_input: &str) -> Option<i32> {
-    None
+pub fn part_two(input: &str) -> Option<i32> {
+    let lines: Vec<_> = input.lines().collect();
+    let valves: Vec<_> = lines
+        .iter()
+        .map(|line| {
+            let splits: Vec<_> = line.split(&[' ', ',']).collect();
+
+            let valve_name = splits[1];
+            let flow_rate = splits[4].split(&['=', ';']).collect::<Vec<&str>>()[1].to_string();
+            let targets: Vec<String> = splits[9..]
+                .to_vec()
+                .iter()
+                .filter(|&&c| c.len() > 0)
+                .map(|c| c.to_string())
+                .collect();
+
+            return Valve {
+                flow_rate: flow_rate.parse().unwrap(),
+                name: valve_name.to_string(),
+                targets,
+            };
+        })
+        .collect();
+
+    let g = ValveGraph::new(valves);
+
+    let mut q: VecDeque<(String, i32, i32, HashSet<String>)> = VecDeque::new();
+    q.push_front(("AA".to_string(), 30, 0, HashSet::new()));
+
+    let mut max_set: HashMap<String, i32> = HashMap::new();
+    while let Some((current_valve, time_remaining, total_relief, opened)) = q.pop_front() {
+        for (node,steps) in g.get_others(current_valve.as_str()).iter() {
+            let v = g.weight(node.clone());
+            let t_remain = time_remaining - 1 - steps;
+            if t_remain.is_negative() || v.flow_rate == 0 {
+                continue;
+            }
+            let mut o = opened.clone();
+            if o.contains(v.name.as_str()) {
+                continue;
+            }
+            let t_relief = total_relief + (t_remain * v.flow_rate);
+            let hash = o.iter().join("");
+            match max_set.get(&hash) {
+                None => {
+                    max_set.insert(hash, t_relief);
+                }
+                Some(&x) => {
+                    if t_relief > x {
+                        max_set.insert(hash, t_relief);
+                    }
+                }
+            }
+            o.insert(v.name.clone());
+            q.push_front((v.name.clone(), t_remain, t_relief, o));
+        }
+    }
+    Some(max_set.values().max().unwrap().clone())
 }
 
 fn main() {
